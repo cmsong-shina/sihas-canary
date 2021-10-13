@@ -66,14 +66,14 @@ class SihasBase:
             return regs
 
         except ModbusNotEnabledError:
-            _LOGGER.warn("modbus <%s, %s>", self.device_type, self.ip)
+            _LOGGER.warn("failed to update: modbus not enabled <%s, %s>", self.device_type, self.ip)
 
         except socket.timeout:
-            _LOGGER.info("timeout during update on <%s, %s>", self.device_type, self.ip)
+            _LOGGER.info("failed to update: timeout <%s, %s>", self.device_type, self.ip)
 
         except Exception as err:
             _LOGGER.warn(
-                "unhandled exception: %s during update on <%s, %s>",
+                "failed to update: unhandled exception: %s <%s, %s>",
                 err,
                 self.device_type,
                 self.ip,
@@ -92,14 +92,16 @@ class SihasBase:
                 return True
 
         except ModbusNotEnabledError:
-            _LOGGER.warn("modbus <%s, %s>", self.device_type, self.ip)
+            _LOGGER.warn(
+                "failed to command: modbus not enabled <%s, %s>", self.device_type, self.ip
+            )
 
         except socket.timeout:
-            _LOGGER.info("timeout during command on <%s, %s>", self.device_type, self.ip)
+            _LOGGER.info("failed to command: timeout <%s, %s>", self.device_type, self.ip)
 
         except Exception as err:
             _LOGGER.warn(
-                "unhandled exception: %s during command on <%s, %s>",
+                "failed to command: unhandled exception: %s <%s, %s>",
                 err,
                 self.device_type,
                 self.ip,

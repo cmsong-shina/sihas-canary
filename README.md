@@ -2,6 +2,13 @@
 
 [TOC]
 
+
+# 개요
+
+[시하스](https://sihas.co.kr/)to[HA](https://www.home-assistant.io/) 연동을 위한 컴포넌트입니다.
+
+
+
 # 지원장치
 
 * ACM-300: 에어컨 제어기

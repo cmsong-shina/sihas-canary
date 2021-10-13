@@ -1,0 +1,89 @@
+<mxfile host="65bd71144e">
+    <diagram id="soQFIZq7KEO_Sn6n5ZgX" name="Page-1">
+        <mxGraphModel dx="1714" dy="651" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-8" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#f8cecc;opacity=30;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="720" width="560" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-30" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#f8cecc;opacity=30;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="720" width="560" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-10" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#dae8fc;opacity=30;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="360" width="560" height="360" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-28" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#dae8fc;opacity=30;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="480" width="560" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-27" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#dae8fc;opacity=30;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="600" width="560" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-1" value="SihasBase" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="390" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-5" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;" parent="1" source="PUVHWLvWs5wMUMgaZp93-2" target="PUVHWLvWs5wMUMgaZp93-1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-2" value="SihasProxy" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="510" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-13" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;" parent="1" source="PUVHWLvWs5wMUMgaZp93-3" target="PUVHWLvWs5wMUMgaZp93-12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-3" value="Acm300, Ccm300..." style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="870" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-6" value="Stm300, Aqm300..." style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="630" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-11" value="&lt;font face=&quot;Helvetica&quot;&gt;Communicate to devices,&lt;/font&gt;&lt;br&gt;&lt;font face=&quot;Helvetica&quot;&gt;Provide &lt;/font&gt;poll&lt;font face=&quot;Helvetica&quot;&gt;, &lt;/font&gt;command" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Cascadia Code;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="360" width="160" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-14" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;" parent="1" source="PUVHWLvWs5wMUMgaZp93-12" target="PUVHWLvWs5wMUMgaZp93-1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-12" value="SihasEntity" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="750" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="PUVHWLvWs5wMUMgaZp93-9" value="Exposed to HA&lt;br&gt;Implement HA Entity" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="840" width="160" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-4" value="Override &lt;font face=&quot;Cascadia Code&quot;&gt;poll&lt;/font&gt; and &lt;font face=&quot;Cascadia Code&quot;&gt;command&lt;/font&gt; and execute via debouncer and offer additional update" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="480" width="160" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-5" value="Implement common HA parts." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="720" width="160" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-18" value="AqmVirtualSensor,&lt;br&gt;StmVirtualLight..." style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="870" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-20" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;" parent="1" source="PUVHWLvWs5wMUMgaZp93-6" target="PUVHWLvWs5wMUMgaZp93-2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="490.0000000000002" y="520" as="sourcePoint"/>
+                        <mxPoint x="450.0000000000002" y="460" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-24" value="" style="endArrow=diamondThin;html=1;rounded=0;endFill=1;" parent="1" source="PUVHWLvWs5wMUMgaZp93-6" target="g-8kqiGf2P7mFbfdL2sW-18" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="510" y="650" as="sourcePoint"/>
+                        <mxPoint x="670" y="650" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-25" value="1" style="resizable=0;html=1;align=left;verticalAlign=bottom;" parent="g-8kqiGf2P7mFbfdL2sW-24" connectable="0" vertex="1">
+                    <mxGeometry x="-1" relative="1" as="geometry">
+                        <mxPoint y="20" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-26" value="n" style="resizable=0;html=1;align=right;verticalAlign=bottom;" parent="g-8kqiGf2P7mFbfdL2sW-24" connectable="0" vertex="1">
+                    <mxGeometry x="1" relative="1" as="geometry">
+                        <mxPoint x="10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="g-8kqiGf2P7mFbfdL2sW-29" value="Implement &lt;font face=&quot;Cascadia Code&quot;&gt;SihasProxy&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="600" width="160" height="120" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

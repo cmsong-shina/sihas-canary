@@ -9,9 +9,8 @@
 * CCM-300: 스마트 콘센트
 * HCM-300: 온도 조절기
 * SBM-300: 조명 스위치(버튼형)
+* PMM-300: 스마트 전력 미터
 * STM-300: 조명 스위치(터치형)
-
-
 
 
 
@@ -21,11 +20,11 @@
 
 > 주의: 신뢰 할 수 있는 네트워크에서만 Home Assistant 연동을 사용하세요.
 
-앱 → 장치 상세 화면 → 설정 속성 → 장치 정보 페이지로 이동 후
+앱 → 장치 상세 화면 → 설정 속성 → 장치 정보 페이지로 이동 후 아래 설정을 수행합니다.
 
-* 펌웨어 버전을 최신 버전으로 업데이트 후
+* 펌웨어 버전을 최신 버전으로 업데이트
 
-* HA 설정을 활성화 합니다.
+* HA 설정을 활성화
 
 
 
@@ -37,7 +36,7 @@
 
 ## configuration.yaml 에 장치 추가
 
-다음과 같은 구성을 추가합니다. 필요한 정보는 장치 정보 페이지에서 찾을 수 있습니다
+다음과 같은 구성을 추가합니다. 필요한 정보는 앱 → 장치 정보 페이지에서 찾을 수 있습니다.
 
 ```yaml
 <base_entity>:
@@ -50,11 +49,15 @@
 ```
 
 * **필수**
-  * `<base_entity>`: climate, light, switch 등. 하기 [장치 목록](#장치 목록) 참조.
 
-  * `<type_of_device>`: ACM, STM 등. 하기 [장치 목록](#장치 목록) 참조.
+  * `<base_entity>`: climate, light, switch 등. 하기 [장치목록](#장치목록) 참조.
+
+  * `<type_of_device>`: ACM, STM 등. 하기 [장치목록](#장치목록) 참조.
 
   * `<ip>`: 장치에 할당한 고정 IP
+
+    > NOTE: 앱이 아닌 공유기에서 확인하는것이 정확합니다. (서버 통신시 업데이트가 되지 않음)
+
     예) `192.168.1.101 `
 
   * `<mac>`: 장치 맥주소, `:`로 구분된 12자리 16진수 문자열, 소문자
@@ -69,7 +72,7 @@
 
 
 
-### 장치 목록
+### 장치목록
 
 #### Climate
 
@@ -88,6 +91,13 @@
 #### Switch
 
 * `CCM`
+
+
+
+#### Sensor
+
+* `AQM`
+* `PMM`
 
 
 
@@ -110,6 +120,7 @@ light:
     mac: a8:2b:d6:12:34:56
     type: STM
     cfg: 3
+    scan_interval: 3
 
   #SBM
   - platform: sihas_canary
@@ -117,6 +128,7 @@ light:
     mac: a8:2b:d6:12:34:56
     type: SBM
     cfg: 1
+    scan_interval: 3
 
 climate:
   # HCM
@@ -125,7 +137,7 @@ climate:
     mac: a8:2b:d6:12:34:56
     type: HCM
     cfg: 0
-    scan_interval: 10
+    scan_interval: 4
 
   # ACM
   - platform: sihas_canary
@@ -133,7 +145,7 @@ climate:
     mac: a8:2b:d6:12:34:56
     type: ACM
     cfg: 1
-    scan_interval: 10
+    scan_interval: 4
 
 sensor:
   # PMM
@@ -142,7 +154,7 @@ sensor:
     mac: a8:2b:d6:12:34:56
     type: PMM
     cfg: 0
-    scan_interval: 10
+    scan_interval: 15
 
   # AQM
   - platform: sihas_canary
@@ -150,7 +162,7 @@ sensor:
     mac: a8:2b:d6:12:34:56
     type: AQM
     cfg: 0
-    scan_interval: 10
+    scan_interval: 15
 ```
 
 
@@ -160,7 +172,7 @@ sensor:
 1. custom_components 폴더에 integration 다운로드
 
    ```bash
-   cd <config_dir>/custom_components && git clone TODO: add proper link
+   cd <config_dir>/custom_components && git clone https://github.com/cmsong-shina/sihas-canary.git
    ```
 
 2. configuration.yaml 수정
@@ -179,13 +191,19 @@ sensor:
 
 
 
+# 업데이트
+
+```bash
+cd <config_dir>/custom_components && git pull
+```
+
 
 
 # QnA
 
-## Q. 상태는 업데이트 되는데 제어는 안돼요
+## Q. 상태는 업데이트 되는데 제어가 되지 않습니다.
 
-펌웨어가 낮거나 Modbus 기능이 활성화 되지 않았을 경우 발생합니다.
+펌웨어가 낮거나 HA 설정이 활성화 되지 않았을 경우 발생합니다.
 
 앱 → 장치화면 → 설정 속성 → 장치 정보에서 펌웨어 버전을 최신으로 올려주시고 HA 설정이 활성화 되어있는지 확인해주세요.
 
@@ -193,19 +211,20 @@ sensor:
 
 ## Q. ModbusNotEnabled 에러가 발생합니다.
 
-Modbus 기능이 활성화 되지 않았을 경우 발생합니다.
+HA 설정이 활성화 되지 않았을 경우 발생합니다.
 
 앱 → 장치화면 → 설정 속성 → 장치 정보에서 HA 설정이 활성화 되어있는지 확인해주세요.
 
 
 
-## Q. timeout 에러가 발생합니다
+## Q. timeout 에러가 발생합니다.
 
-로그에 다음과 같은 에러가 발생 할 경우 장치의 IP가 올바로 설정 되어 있는지 확인해주세요.
+HA 설정여부와 장치의 IP가 올바르게 설정 되어 있는지 확인해주세요.
 
 가급적 장치에 고정 IP를 부여하는 것이 좋습니다.
 
-```
-2021-10-12 14:42:32 INFO (SyncWorker_7) [custom_components.sihas_canary.sihas_base] timeout on <AQM, 192.168.1.1>
-```
 
+
+## Q. 앱에서 HA 설정이 확인중에서 바뀌지 않습니다.
+
+장치 펌웨어를 업데이트 해주세요.

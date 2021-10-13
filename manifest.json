@@ -1,0 +1,16 @@
+{
+  "domain": "sihas_canary",
+  "name": "sihas_canary",
+  "config_flow": true,
+  "documentation": "https://github.com/cmsong-shina/sihas-canary",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@cmsong-shina"
+  ],
+  "iot_class": "local_polling",
+  "version": "1.0.0"
+}

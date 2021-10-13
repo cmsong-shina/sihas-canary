@@ -170,7 +170,7 @@ class Aqm300(SihasProxy):
         - pm25
         - temperature
 
-    and it will appear seperatly as AQMGenericSubSensor
+    and it will appear seperatly as AqmVirtualSensor
     """
 
     def __init__(

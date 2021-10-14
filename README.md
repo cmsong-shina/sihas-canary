@@ -200,8 +200,23 @@ sensor:
 
 # 업데이트
 
+### 최신 버전으로 업데이트
+
 ```bash
-cd <config_dir>/custom_components && git pull
+cd <config_dir>/custom_components/sihas_canary && git pull
+```
+
+
+
+### 특정 버전으로 변경
+
+```bash
+$ git tag
+v1.0.0
+v1.0.1
+v1.0.1
+
+$ git checkout v1.0.0
 ```
 
 

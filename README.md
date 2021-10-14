@@ -179,7 +179,7 @@ sensor:
 1. custom_components 폴더에 integration 다운로드
 
    ```bash
-   cd <config_dir>/custom_components && git clone https://github.com/cmsong-shina/sihas-canary.git
+   cd <config_dir>/custom_components && git clone https://github.com/cmsong-shina/sihas-canary.git sihas_canary
    ```
 
 2. configuration.yaml 수정

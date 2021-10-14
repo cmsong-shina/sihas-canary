@@ -75,7 +75,7 @@
 
 * **선택**
 
-  * `<scan-interval>`: 업데이트 주기(초), 2~10 사이로 설정 권장, 미설정시 기본값 30초([HA spec 참조](https://www.home-assistant.io/docs/configuration/platform_options#scan-interval))
+  * `<scan-interval>`: 업데이트 주기(초), 3~10 사이로 설정 권장, 미설정시 기본값 30초([HA spec 참조](https://www.home-assistant.io/docs/configuration/platform_options#scan-interval))
 
 
 

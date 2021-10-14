@@ -210,7 +210,7 @@ cd <config_dir>/custom_components/sihas_canary && git pull
 $ git tag
 v1.0.0
 v1.0.1
-v1.0.1
+v1.0.2
 
 $ git checkout v1.0.0
 ```

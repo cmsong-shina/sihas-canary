@@ -192,10 +192,6 @@ sensor:
 
 3. HA 재시작
 
-   ```bash
-   sudo systemctl restart hass
-   ```
-
 
 
 # 업데이트

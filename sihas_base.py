@@ -11,7 +11,7 @@ from .util import Debouncer
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_DEBOUNCE_DURATION: Final = 5
+DEFAULT_DEBOUNCE_DURATION: Final = 3
 
 
 class SihasBase:

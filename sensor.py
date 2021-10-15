@@ -3,11 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List
 
-from homeassistant.components.sensor import (
-    STATE_CLASS_MEASUREMENT,
-    STATE_CLASS_TOTAL,
-    SensorEntity,
-)
+from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL, SensorEntity
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_BILLION,
@@ -18,12 +14,13 @@ from homeassistant.const import (
     DEVICE_CLASS_ILLUMINANCE,
     DEVICE_CLASS_PM10,
     DEVICE_CLASS_PM25,
+    DEVICE_CLASS_POWER,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
     ENERGY_KILO_WATT_HOUR,
-    POWER_WATT,
     LIGHT_LUX,
     PERCENTAGE,
+    POWER_WATT,
     TEMP_CELSIUS,
 )
 from homeassistant.core import HomeAssistant
@@ -32,17 +29,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
-
-from .const import (
-    CONF_CFG,
-    CONF_IP,
-    CONF_MAC,
-    CONF_TYPE,
-    ICON_POWER_METER,
-    SIHAS_PLATFORM_SCHEMA,
-)
+from .const import CONF_CFG, CONF_IP, CONF_MAC, CONF_TYPE, ICON_POWER_METER, SIHAS_PLATFORM_SCHEMA
 from .sihas_base import SihasEntity, SihasProxy
-
 
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
@@ -102,7 +90,7 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     "cur_energy": {
         "nuom": POWER_WATT,
         "value_handler": lambda r: r[2],
-        "device_class": DEVICE_CLASS_ENERGY,
+        "device_class": DEVICE_CLASS_POWER,
         "state_class": STATE_CLASS_MEASUREMENT,
         "default_name": "power",
         "sub_id": "power",

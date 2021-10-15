@@ -54,6 +54,8 @@ ICON_LIGHT_BULB: Final = "mdi:lightbulb-variant"
 ICON_POWER_METER: Final = "mdi:transmission-tower"
 ICON_POWER_SOCKET: Final = "mdi:power-socket-de"
 
+DEFAULT_DEBOUNCE_DURATION: Final = 3
+
 
 SIHAS_PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {

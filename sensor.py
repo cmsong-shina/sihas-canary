@@ -107,13 +107,21 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         "default_name": "power",
         "sub_id": "power",
     },
-    "acc_energy": {
+    "this_month_energy": {
         "nuom": ENERGY_KILO_WATT_HOUR,
         "value_handler": lambda r: r[10] / 100,
         "device_class": DEVICE_CLASS_ENERGY,
         "state_class": STATE_CLASS_TOTAL,
         "default_name": "this_month_energy",
         "sub_id": "this_month_energy",
+    },
+    "this_day_energy": {
+        "nuom": ENERGY_KILO_WATT_HOUR,
+        "value_handler": lambda r: r[8] / 100,
+        "device_class": DEVICE_CLASS_ENERGY,
+        "state_class": STATE_CLASS_TOTAL,
+        "default_name": "this_day_energy",
+        "sub_id": "this_day_energy",
     },
 }
 
@@ -163,7 +171,8 @@ class Pmm300(SihasProxy):
     def get_sub_entities(self) -> List[Entity]:
         return [
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["cur_energy"]),
-            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["acc_energy"]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["this_month_energy"]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["this_day_energy"]),
         ]
 
 

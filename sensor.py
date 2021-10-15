@@ -138,7 +138,7 @@ def setup_platform(
         )
         add_entities(aqm.get_sub_entities())
     else:
-        raise NotImplementedError("not implemented device type: {config[CONF_TYPE]}")
+        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
 
 
 class Pmm300(SihasProxy):

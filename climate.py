@@ -102,7 +102,7 @@ def setup_platform(
                 f"failed to add device <{config[CONF_TYPE]}, {config[CONF_IP]}>, be sure IP is correct and restart HA to load HCM: {e}"
             )
     else:
-        raise NotImplementedError("not implemented device type: {config[CONF_TYPE]}")
+        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
 
 
 class Hcm300(SihasProxy):

@@ -30,7 +30,7 @@ def setup_platform(
         )
         add_entities(stm_sbm.get_sub_entities())
     else:
-        raise NotImplementedError("not implemented device type: {config[CONF_TYPE]}")
+        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
 
 
 class StmSbm300(SihasProxy):

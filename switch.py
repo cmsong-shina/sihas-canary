@@ -46,7 +46,7 @@ def setup_platform(
         )
 
     else:
-        raise NotImplementedError("not implemented device type: {config[CONF_TYPE]}")
+        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
 
 
 class Ccm300(SihasEntity, SwitchEntity):

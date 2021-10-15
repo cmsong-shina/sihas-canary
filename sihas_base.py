@@ -4,14 +4,13 @@ from typing import Final, List, Optional
 
 from homeassistant.helpers.entity import Entity
 
+from .const import DEFAULT_DEBOUNCE_DURATION
 from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send
 from .util import Debouncer
 
 _LOGGER = logging.getLogger(__name__)
-
-DEFAULT_DEBOUNC_DURATION: Final = 5
 
 
 class SihasBase:
@@ -80,8 +79,9 @@ class SihasBase:
             )
 
         # if exception catched
-        self._attr_available = False
-        _LOGGER.info(f"device set to not available <{self.device_type, self.ip}>")
+        if self._attr_available:
+            self._attr_available = False
+            _LOGGER.info(f"device set to not available <{self.device_type, self.ip}>")
         return None
 
     def command(self, idx, val) -> bool:
@@ -138,6 +138,7 @@ class SihasEntity(SihasBase, Entity):
 
         # init optional value
         self._attr_unique_id = uid if uid else f"{self.device_type}-{self.mac}"
+        self._attr_name = uid if uid else f"{self.device_type}-{self.mac}"
 
         # init empty value
         self._attributes = {}
@@ -184,7 +185,7 @@ class SihasProxy(SihasBase):
         )
         self.registers = [0] * 64
         # self.proxy_available = False
-        self._proxy_updater = Debouncer(DEFAULT_DEBOUNC_DURATION, self._internal_update)
+        self._proxy_updater = Debouncer(self._internal_update)
 
     def _internal_update(self):
         if registers := self.poll():

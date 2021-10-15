@@ -3,11 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List
 
-from homeassistant.components.sensor import (
-    STATE_CLASS_MEASUREMENT,
-    STATE_CLASS_TOTAL,
-    SensorEntity,
-)
+from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL, SensorEntity
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_BILLION,
@@ -18,12 +14,13 @@ from homeassistant.const import (
     DEVICE_CLASS_ILLUMINANCE,
     DEVICE_CLASS_PM10,
     DEVICE_CLASS_PM25,
+    DEVICE_CLASS_POWER,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
     ENERGY_KILO_WATT_HOUR,
-    POWER_WATT,
     LIGHT_LUX,
     PERCENTAGE,
+    POWER_WATT,
     TEMP_CELSIUS,
 )
 from homeassistant.core import HomeAssistant
@@ -32,17 +29,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
-
-from .const import (
-    CONF_CFG,
-    CONF_IP,
-    CONF_MAC,
-    CONF_TYPE,
-    ICON_POWER_METER,
-    SIHAS_PLATFORM_SCHEMA,
-)
+from .const import CONF_CFG, CONF_IP, CONF_MAC, CONF_TYPE, ICON_POWER_METER, SIHAS_PLATFORM_SCHEMA
 from .sihas_base import SihasEntity, SihasProxy
-
 
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
@@ -52,49 +40,49 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
         "value_handler": lambda r: round(r[1] / 10, 1),
         "device_class": DEVICE_CLASS_HUMIDITY,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "humidity",
+        "sub_id": "humidity",
     },
     "temperature": {
         "uom": TEMP_CELSIUS,
         "value_handler": lambda r: round(r[0] / 10, 1),
         "device_class": DEVICE_CLASS_TEMPERATURE,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "temperature",
+        "sub_id": "temperature",
     },
     "illuminance": {
         "uom": LIGHT_LUX,
         "value_handler": lambda r: r[6],
         "device_class": DEVICE_CLASS_ILLUMINANCE,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "illuminance",
+        "sub_id": "illuminance",
     },
     "co2": {
         "uom": CONCENTRATION_PARTS_PER_MILLION,
         "value_handler": lambda r: r[2],
         "device_class": DEVICE_CLASS_CO2,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "co2",
+        "sub_id": "co2",
     },
     "pm25": {
         "uom": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         "value_handler": lambda r: r[3],
         "device_class": DEVICE_CLASS_PM25,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "pm25",
+        "sub_id": "pm25",
     },
     "pm10": {
         "uom": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         "value_handler": lambda r: r[4],
         "device_class": DEVICE_CLASS_PM10,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "pm10",
+        "sub_id": "pm10",
     },
     "tvoc": {
         "uom": CONCENTRATION_PARTS_PER_BILLION,
         "value_handler": lambda r: r[5],
         "device_class": DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "tvoc",
+        "sub_id": "tvoc",
     },
 }
 
@@ -102,9 +90,8 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     "cur_energy": {
         "nuom": POWER_WATT,
         "value_handler": lambda r: r[2],
-        "device_class": DEVICE_CLASS_ENERGY,
+        "device_class": DEVICE_CLASS_POWER,
         "state_class": STATE_CLASS_MEASUREMENT,
-        "default_name": "power",
         "sub_id": "power",
     },
     "this_month_energy": {
@@ -112,7 +99,6 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         "value_handler": lambda r: r[10] / 100,
         "device_class": DEVICE_CLASS_ENERGY,
         "state_class": STATE_CLASS_TOTAL,
-        "default_name": "this_month_energy",
         "sub_id": "this_month_energy",
     },
     "this_day_energy": {
@@ -120,7 +106,6 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         "value_handler": lambda r: r[8] / 100,
         "device_class": DEVICE_CLASS_ENERGY,
         "state_class": STATE_CLASS_TOTAL,
-        "default_name": "this_day_energy",
         "sub_id": "this_day_energy",
     },
 }
@@ -150,7 +135,7 @@ def setup_platform(
         )
         add_entities(aqm.get_sub_entities())
     else:
-        raise NotImplementedError("not implemented device type: {config[CONF_TYPE]}")
+        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
 
 
 class Pmm300(SihasProxy):
@@ -179,13 +164,13 @@ class Pmm300(SihasProxy):
 class PmmVirtualSensor(SensorEntity):
     _attr_icon = ICON_POWER_METER
 
-    def __init__(self, pmm: Pmm300, conf: Dict) -> None:
+    def __init__(self, proxy: Pmm300, conf: Dict) -> None:
         super().__init__()
-        self._proxy = pmm
+        self._proxy = proxy
         self._attr_available = self._proxy._attr_available
-        self._attr_unique_id = f"PMM-{pmm.mac}-{conf['sub_id']}"
+        self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_native_unit_of_measurement = conf["nuom"]
-        self._attr_name = conf["default_name"]
+        self._attr_name = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 
@@ -238,14 +223,14 @@ class Aqm300(SihasProxy):
 
 
 class AqmVirtualSensor(SensorEntity):
-    def __init__(self, aqm: Aqm300, conf: Dict) -> None:
+    def __init__(self, proxy: Aqm300, conf: Dict) -> None:
         super().__init__()
 
-        self._proxy = aqm
+        self._proxy = proxy
         self._attr_available = self._proxy._attr_available
-        self._attr_unique_id = f"AQM-{aqm.mac}-{conf['device_class']}"
+        self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['device_class']}"
         self._attr_unit_of_measurement = conf["uom"]
-        self._attr_name = conf["default_name"]
+        self._attr_name = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 

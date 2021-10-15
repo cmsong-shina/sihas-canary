@@ -55,6 +55,7 @@ ICON_POWER_METER: Final = "mdi:transmission-tower"
 ICON_POWER_SOCKET: Final = "mdi:power-socket-de"
 
 DEFAULT_DEBOUNCE_DURATION: Final = 3
+DEFAULT_PARALLEL_UPDATES: Final = 5
 
 
 SIHAS_PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(

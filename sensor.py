@@ -29,9 +29,18 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
-from .const import CONF_CFG, CONF_IP, CONF_MAC, CONF_TYPE, ICON_POWER_METER, SIHAS_PLATFORM_SCHEMA
+from .const import (
+    CONF_CFG,
+    CONF_IP,
+    CONF_MAC,
+    CONF_TYPE,
+    DEFAULT_PARALLEL_UPDATES,
+    ICON_POWER_METER,
+    SIHAS_PLATFORM_SCHEMA,
+)
 from .sihas_base import SihasEntity, SihasProxy
 
+PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
 AQM_GENERIC_SENSOR_DEFINE: Final = {

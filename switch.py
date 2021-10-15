@@ -12,7 +12,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
-from .const import CONF_CFG, CONF_IP, CONF_MAC, CONF_TYPE, ICON_POWER_SOCKET, SIHAS_PLATFORM_SCHEMA
+from .const import (
+    CONF_CFG,
+    CONF_IP,
+    CONF_MAC,
+    CONF_TYPE,
+    DEFAULT_PARALLEL_UPDATES,
+    ICON_POWER_SOCKET,
+    SIHAS_PLATFORM_SCHEMA,
+)
 from .packet_builder import packet_builder
 from .sender import send
 from .sihas_base import SihasEntity
@@ -24,6 +32,7 @@ CCM_REG_CUR_W: Final = 3  # power
 CCM_REG_CUR_PF: Final = 4  # power_factor
 
 
+PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
 

@@ -9,9 +9,18 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from .const import CONF_CFG, CONF_IP, CONF_MAC, CONF_TYPE, ICON_LIGHT_BULB, SIHAS_PLATFORM_SCHEMA
+from .const import (
+    CONF_CFG,
+    CONF_IP,
+    CONF_MAC,
+    CONF_TYPE,
+    DEFAULT_PARALLEL_UPDATES,
+    ICON_LIGHT_BULB,
+    SIHAS_PLATFORM_SCHEMA,
+)
 from .sihas_base import SihasProxy
 
+PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
 

@@ -138,6 +138,7 @@ class SihasEntity(SihasBase, Entity):
 
         # init optional value
         self._attr_unique_id = uid if uid else f"{self.device_type}-{self.mac}"
+        self._attr_name = uid if uid else f"{self.device_type}-{self.mac}"
 
         # init empty value
         self._attributes = {}

@@ -164,13 +164,13 @@ class Pmm300(SihasProxy):
 class PmmVirtualSensor(SensorEntity):
     _attr_icon = ICON_POWER_METER
 
-    def __init__(self, pmm: Pmm300, conf: Dict) -> None:
+    def __init__(self, proxy: Pmm300, conf: Dict) -> None:
         super().__init__()
-        self._proxy = pmm
+        self._proxy = proxy
         self._attr_available = self._proxy._attr_available
-        self._attr_unique_id = f"{pmm.device_type}-{pmm.mac}-{conf['sub_id']}"
+        self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_native_unit_of_measurement = conf["nuom"]
-        self._attr_name = f"{pmm.device_type}-{pmm.mac}-{conf['sub_id']}"
+        self._attr_name = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 
@@ -223,14 +223,14 @@ class Aqm300(SihasProxy):
 
 
 class AqmVirtualSensor(SensorEntity):
-    def __init__(self, aqm: Aqm300, conf: Dict) -> None:
+    def __init__(self, proxy: Aqm300, conf: Dict) -> None:
         super().__init__()
 
-        self._proxy = aqm
+        self._proxy = proxy
         self._attr_available = self._proxy._attr_available
-        self._attr_unique_id = f"{aqm.device_type}-{aqm.mac}-{conf['device_class']}"
+        self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['device_class']}"
         self._attr_unit_of_measurement = conf["uom"]
-        self._attr_name = f"{aqm.device_type}-{aqm.mac}-{conf['sub_id']}"
+        self._attr_name = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 

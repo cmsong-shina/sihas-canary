@@ -21,6 +21,7 @@ from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
     ENERGY_KILO_WATT_HOUR,
+    POWER_WATT,
     LIGHT_LUX,
     PERCENTAGE,
     TEMP_CELSIUS,
@@ -97,6 +98,25 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
     },
 }
 
+PMM_GENERIC_SENSOR_DEFINE: Final = {
+    "cur_energy": {
+        "nuom": POWER_WATT,
+        "value_handler": lambda r: r[2],
+        "device_class": DEVICE_CLASS_ENERGY,
+        "state_class": STATE_CLASS_MEASUREMENT,
+        "default_name": "power",
+        "sub_id": "power",
+    },
+    "acc_energy": {
+        "nuom": ENERGY_KILO_WATT_HOUR,
+        "value_handler": lambda r: r[10] / 100,
+        "device_class": DEVICE_CLASS_ENERGY,
+        "state_class": STATE_CLASS_TOTAL,
+        "default_name": "this_month_energy",
+        "sub_id": "this_month_energy",
+    },
+}
+
 
 def setup_platform(
     hass: HomeAssistant,
@@ -105,16 +125,14 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     if config[CONF_TYPE] == "PMM":
-        add_entities(
-            [
-                Pmm300(
-                    ip=config[CONF_IP],
-                    mac=config[CONF_MAC],
-                    device_type=config[CONF_TYPE],
-                    config=config[CONF_CFG],
-                ),
-            ],
+        pmm = Pmm300(
+            ip=config[CONF_IP],
+            mac=config[CONF_MAC],
+            device_type=config[CONF_TYPE],
+            config=config[CONF_CFG],
         )
+        add_entities(pmm.get_sub_entities())
+
     elif config[CONF_TYPE] == "AQM":
         aqm = Aqm300(
             ip=config[CONF_IP],
@@ -127,17 +145,7 @@ def setup_platform(
         raise NotImplementedError("not implemented device type: {config[CONF_TYPE]}")
 
 
-class Pmm300(SihasEntity, SensorEntity):
-    _attr_icon = ICON_POWER_METER
-
-    _attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
-    _attr_device_class = DEVICE_CLASS_ENERGY
-    _attr_state_class = STATE_CLASS_TOTAL
-
-    REG_WATT: Final[int] = 2
-    REG_ACC_WATT_HOUR1: Final[int] = 40
-    REG_ACC_WATT_HOUR2: Final[int] = 41
-
+class Pmm300(SihasProxy):
     def __init__(
         self,
         ip: str,
@@ -152,11 +160,32 @@ class Pmm300(SihasEntity, SensorEntity):
             config=config,
         )
 
+    def get_sub_entities(self) -> List[Entity]:
+        return [
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["cur_energy"]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["acc_energy"]),
+        ]
+
+
+class PmmVirtualSensor(SensorEntity):
+    _attr_icon = ICON_POWER_METER
+
+    def __init__(self, pmm: Pmm300, conf: Dict) -> None:
+        super().__init__()
+        self._proxy = pmm
+        self._attr_available = self._proxy._attr_available
+        self._attr_unique_id = f"PMM-{pmm.mac}-{conf['sub_id']}"
+        self._attr_native_unit_of_measurement = conf["nuom"]
+        self._attr_name = conf["default_name"]
+        self._attr_device_class = conf["device_class"]
+        self._attr_state_class = conf["state_class"]
+
+        self.value_handler: function = conf["value_handler"]
+
     def update(self):
-        if regs := self.poll():
-            self._attr_native_value = (
-                regs[self.REG_ACC_WATT_HOUR1] << 16 | regs[self.REG_ACC_WATT_HOUR2]
-            )
+        self._proxy.update()
+        self._attr_native_value = self.value_handler(self._proxy.registers)
+        self._attr_available = self._proxy._attr_available
 
 
 class Aqm300(SihasProxy):

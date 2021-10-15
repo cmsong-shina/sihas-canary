@@ -79,6 +79,7 @@ class SihasBase:
             )
 
         # if exception catched
+        if self._attr_available:
             self._attr_available = False
             _LOGGER.info(f"device set to not available <{self.device_type, self.ip}>")
         return None

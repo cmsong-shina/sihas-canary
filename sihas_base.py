@@ -11,7 +11,7 @@ from .util import Debouncer
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_DEBOUNC_DURATION: Final = 5
+DEFAULT_DEBOUNCE_DURATION: Final = 5
 
 
 class SihasBase:
@@ -184,7 +184,7 @@ class SihasProxy(SihasBase):
         )
         self.registers = [0] * 64
         # self.proxy_available = False
-        self._proxy_updater = Debouncer(DEFAULT_DEBOUNC_DURATION, self._internal_update)
+        self._proxy_updater = Debouncer(DEFAULT_DEBOUNCE_DURATION, self._internal_update)
 
     def _internal_update(self):
         if registers := self.poll():

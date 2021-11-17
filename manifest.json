@@ -7,7 +7,9 @@
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": [],
+  "dependencies": [
+    "zeroconf"
+  ],
   "codeowners": [
     "@cmsong-shina"
   ],

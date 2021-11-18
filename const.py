@@ -1,5 +1,5 @@
 """Constants for the sihas_canary integration."""
-from typing import Final
+from typing import Final, List, final
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -33,10 +33,21 @@ DEVICE_TYPE: Final = {
     "SBM": 21,
 }
 
+SUPPORT_DEVICE: Final[List[str]] = [
+    "ACM",
+    "AQM",
+    "CCM",
+    "HCM",
+    "SBM",
+    "PMM",
+    "STM",
+]
+
 DEFAULT_TIMEOUT: Final = 0.5
 PORT: Final = 502
 BUF_SIZE: Final = 1024
 
+MAC_OUI = "a82bd6"
 
 # configuration variables
 CONF_NAME: Final = "name"
@@ -45,6 +56,11 @@ CONF_MAC: Final = "mac"
 CONF_TYPE: Final = "type"
 CONF_SSID: Final = "ssid"
 CONF_CFG: Final = "cfg"
+
+# for config flow
+CONF_PROP: Final = "properties"
+CONF_HOST: Final = "host"
+CONF_HOSTNAME: Final = "hostname"
 
 
 # icons

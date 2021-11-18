@@ -1,5 +1,6 @@
 from datetime import datetime
 from types import FunctionType
+from typing import List
 
 from .const import DEFAULT_DEBOUNCE_DURATION
 
@@ -29,3 +30,16 @@ class Debouncer:
             self._callback()
             return True
         return False
+
+
+class MacConv:
+    def insert_colon(s: str):
+        if ":" in s:
+            return s
+
+        # ['AB', 'CD', 'EF', '12', '34', '56']
+        mac_parts = [s[2 * i : 2 + 2 * i] for i in range(6)]
+        return ":".join(mac_parts)
+
+    def remove_colon(s: str):
+        return s.replace(":", "")

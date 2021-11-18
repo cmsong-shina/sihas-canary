@@ -26,6 +26,7 @@ from homeassistant.components.climate.const import (
     SWING_OFF,
     SWING_VERTICAL,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
@@ -39,6 +40,7 @@ from .const import (
     CONF_MAC,
     CONF_TYPE,
     DEFAULT_PARALLEL_UPDATES,
+    DOMAIN,
     ICON_COOLER,
     ICON_HEATER,
     SIHAS_PLATFORM_SCHEMA,
@@ -47,6 +49,7 @@ from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send
 from .sihas_base import SihasEntity, SihasProxy
+from .util import MacConv
 
 HCM_REG_ONOFF: Final = 0
 HCM_REG_SET_TMP: Final = 1
@@ -68,36 +71,33 @@ PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA: Final = SIHAS_PLATFORM_SCHEMA
 
 
-def setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if config[CONF_TYPE] == "ACM":
-        add_entities(
+    if entry.data[CONF_TYPE] == "ACM":
+        async_add_entities(
             [
                 Acm300(
-                    config[CONF_IP],
-                    config[CONF_MAC],
-                    config[CONF_TYPE],
-                    config[CONF_CFG],
+                    entry.data[CONF_IP],
+                    entry.data[CONF_MAC],
+                    entry.data[CONF_TYPE],
+                    entry.data[CONF_CFG],
                 ),
             ],
         )
-    elif config[CONF_TYPE] == "HCM":
+    elif entry.data[CONF_TYPE] == "HCM":
         try:
-            add_entities(
+            async_add_entities(
                 Hcm300(
-                    config[CONF_IP],
-                    config[CONF_MAC],
-                    config[CONF_TYPE],
-                    config[CONF_CFG],
+                    entry.data[CONF_IP],
+                    entry.data[CONF_MAC],
+                    entry.data[CONF_TYPE],
+                    entry.data[CONF_CFG],
                 ).get_sub_entities()
             )
 
         except ModbusNotEnabledError:
-            raise ModbusNotEnabledError(config[CONF_IP])
+            raise ModbusNotEnabledError(entry.data[CONF_IP])
 
         except Exception as e:
             _LOGGER.error(
@@ -105,6 +105,7 @@ def setup_platform(
             )
     else:
         raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
+    return
 
 
 class Hcm300(SihasProxy):

@@ -3,12 +3,8 @@
   "name": "sihas_canary",
   "config_flow": true,
   "documentation": "https://github.com/cmsong-shina/sihas-canary",
-  "requirements": [],
-  "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
-  "dependencies": [
-    "zeroconf"
+  "zeroconf": [
+    "_sihas._tcp.local."
   ],
   "codeowners": [
     "@cmsong-shina"

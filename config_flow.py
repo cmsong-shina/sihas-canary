@@ -2,68 +2,28 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, List
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.typing import DiscoveryInfoType
 
-from .const import DOMAIN
+from .const import (
+    CONF_CFG,
+    CONF_HOST,
+    CONF_HOSTNAME,
+    CONF_NAME,
+    CONF_PROP,
+    DOMAIN,
+    MAC_OUI,
+    SUPPORT_DEVICE,
+)
+from .sihas_base import SihasBase
+from .util import MacConv
 
 _LOGGER = logging.getLogger(__name__)
-
-# TODO adjust the data schema to the data that you need
-STEP_USER_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required("host"): str,
-        vol.Required("username"): str,
-        vol.Required("password"): str,
-    }
-)
-
-
-class PlaceholderHub:
-    """Placeholder class to make tests pass.
-
-    TODO Remove this placeholder class and replace with things from your PyPI package.
-    """
-
-    def __init__(self, host: str) -> None:
-        """Initialize."""
-        self.host = host
-
-    async def authenticate(self, username: str, password: str) -> bool:
-        """Test if we can authenticate with the host."""
-        return True
-
-
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input allows us to connect.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-    # TODO validate the data can be used to set up a connection.
-
-    # If your PyPI package is not built with async, pass your methods
-    # to the executor:
-    # await hass.async_add_executor_job(
-    #     your_validate_func, data["username"], data["password"]
-    # )
-
-    hub = PlaceholderHub(data["host"])
-
-    if not await hub.authenticate(data["username"], data["password"]):
-        raise InvalidAuth
-
-    # If you cannot connect:
-    # throw CannotConnect
-    # If the authentication is wrong:
-    # InvalidAuth
-
-    # Return info that you want to store in the config entry.
-    return {"title": "Name of the device"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -71,28 +31,75 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Handle the initial step."""
-        if user_input is None:
-            return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA)
+    def __init__(self) -> None:
+        self.sihas: SihasBase
+        self.data: map = {}
 
-        errors = {}
+    async def async_step_zeroconf(self, discovery_info: DiscoveryInfoType) -> FlowResult:
+        _LOGGER.debug("***** SiHAS device found by zeroconf: %s", discovery_info)
 
-        try:
-            info = await validate_input(self.hass, user_input)
-        except CannotConnect:
-            errors["base"] = "cannot_connect"
-        except InvalidAuth:
-            errors["base"] = "invalid_auth"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
-            errors["base"] = "unknown"
-        else:
-            return self.async_create_entry(title=info["title"], data=user_input)
+        # {
+        #     "host": "192.168.3.17",
+        #     "hostname": "sihas_acm_0a2998.local.",
+        #     "properties": {
+        #         "vendor ": " Espressif",
+        #         "version": "1.35",
+        #         "type": "acm",
+        #         "cfg": "0"
+        #     }
+        # }
+
+        # ['sihas', 'acm', '0a2998']
+        hostname_parts: List[str] = discovery_info[CONF_HOSTNAME].split(".")[0].split("_")
+
+        # self.data.name = "디폴트"
+        self.data["ip"] = discovery_info[CONF_HOST]
+        self.data["mac"] = MacConv.insert_colon(MAC_OUI + hostname_parts[2]).lower()
+        self.data["type"] = hostname_parts[1].upper()
+        self.data["cfg"] = int(discovery_info[CONF_PROP][CONF_CFG], 16)
+
+        if self.data["type"] not in SUPPORT_DEVICE:
+            return self.async_abort(reason=f"not supported device type: {self.data['type']}")
+
+        # set uid and abort if exist
+        # but, should I config at here?
+        #
+        # await self.async_set_unique_id(self.brother.serial.lower())
+        # self._abort_if_unique_id_configured()
+
+        # display device on integrations page to advertise to user
+        self.context.update(
+            {
+                "title_placeholders": {
+                    "type": self.data["type"],
+                    "mac": self.data["mac"],
+                }
+            }
+        )
+
+        return await self.async_step_zeroconf_confirm()
+
+    async def async_step_zeroconf_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+
+        if not user_input:
+            return self.async_create_entry(
+                title=self.data["type"],
+                data=self.data,
+            )
 
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="zeroconf_confirm",
+            data_schema=vol.Schema({vol.Optional(CONF_NAME, default="기본값")}),
+            description_placeholders={
+                "mac": self.data["mac"],
+                "type": self.data["type"],
+            },
         )
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        _LOGGER.warn(f"starting SiHAS user step: {user_input=}")
 
 
 class CannotConnect(HomeAssistantError):

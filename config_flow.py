@@ -9,6 +9,7 @@ from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.typing import DiscoveryInfoType
+import homeassistant.helpers.config_validation as cv
 
 from .const import (
     CONF_CFG,
@@ -83,7 +84,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
 
-        if not user_input:
+        if user_input:
             return self.async_create_entry(
                 title=self.data["type"],
                 data=self.data,
@@ -91,7 +92,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="zeroconf_confirm",
-            data_schema=vol.Schema({vol.Optional(CONF_NAME, default="기본값")}),
+            # data_schema will used to obtain data from user
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_NAME, default=self.data["type"] + self.data["mac"]
+                    ): cv.string,
+                }
+            ),
+            # description_placeholders will used to format string
             description_placeholders={
                 "mac": self.data["mac"],
                 "type": self.data["type"],

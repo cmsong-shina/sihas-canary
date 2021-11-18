@@ -15,6 +15,13 @@
                     "password": "Password",
                     "username": "Username"
                 }
+            },
+            "zeroconf_confirm": {
+                "data": {
+                    "name": "Name of device"
+                },
+                "description": "Type: {type}\nMac: {mac}",
+                "title": "Add SiHAS Device"
             }
         }
     }

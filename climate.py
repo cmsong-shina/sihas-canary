@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import socket
+from datetime import timedelta
 from typing import Dict, List, final
 
 from homeassistant.components.climate import ClimateEntity
@@ -51,6 +52,8 @@ from .packet_builder import packet_builder as pb
 from .sender import send
 from .sihas_base import SihasEntity, SihasProxy
 from .util import MacConv
+
+SCAN_INTERVAL = timedelta(seconds=5)
 
 HCM_REG_ONOFF: Final = 0
 HCM_REG_SET_TMP: Final = 1

@@ -85,6 +85,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
 
         if user_input:
+            self.data["name"] = user_input["name"]
             return self.async_create_entry(
                 title=self.data["type"],
                 data=self.data,
@@ -95,7 +96,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # data_schema will used to obtain data from user
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
+                    vol.Required(
                         CONF_NAME, default=self.data["type"] + self.data["mac"]
                     ): cv.string,
                 }

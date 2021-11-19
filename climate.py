@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import logging
-import socket
 from datetime import timedelta
-from typing import Dict, List, final
+from typing import Dict, List
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
@@ -32,7 +31,6 @@ from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
 from .const import (
@@ -42,7 +40,6 @@ from .const import (
     CONF_NAME,
     CONF_TYPE,
     DEFAULT_PARALLEL_UPDATES,
-    DOMAIN,
     ICON_COOLER,
     ICON_HEATER,
     SIHAS_PLATFORM_SCHEMA,
@@ -51,7 +48,6 @@ from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send
 from .sihas_base import SihasEntity, SihasProxy
-from .util import MacConv
 
 SCAN_INTERVAL = timedelta(seconds=5)
 

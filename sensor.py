@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import timedelta
 
 import logging
 from typing import Dict, List
@@ -39,6 +40,8 @@ from .const import (
     SIHAS_PLATFORM_SCHEMA,
 )
 from .sihas_base import SihasEntity, SihasProxy
+
+SCAN_INTERVAL = timedelta(seconds=5)
 
 PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import timedelta
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import (
@@ -24,6 +25,8 @@ from .const import (
 from .packet_builder import packet_builder
 from .sender import send
 from .sihas_base import SihasEntity
+
+SCAN_INTERVAL = timedelta(seconds=5)
 
 CCM_REG_POWER: Final = 0
 CCM_REG_CUR_V: Final = 1  # voltage

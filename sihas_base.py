@@ -128,6 +128,7 @@ class SihasEntity(SihasBase, Entity):
         device_type: str,
         config: int,
         uid: str = None,
+        name: str = None,
     ) -> None:
         super().__init__(
             ip,
@@ -138,7 +139,7 @@ class SihasEntity(SihasBase, Entity):
 
         # init optional value
         self._attr_unique_id = uid if uid else f"{self.device_type}-{self.mac}"
-        self._attr_name = uid if uid else f"{self.device_type}-{self.mac}"
+        self._attr_name = name if name else self._attr_unique_id
 
         # init empty value
         self._attributes = {}

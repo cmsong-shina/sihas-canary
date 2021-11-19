@@ -38,6 +38,7 @@ from .const import (
     CONF_CFG,
     CONF_IP,
     CONF_MAC,
+    CONF_NAME,
     CONF_TYPE,
     DEFAULT_PARALLEL_UPDATES,
     DOMAIN,
@@ -82,6 +83,7 @@ async def async_setup_entry(
                     entry.data[CONF_MAC],
                     entry.data[CONF_TYPE],
                     entry.data[CONF_CFG],
+                    entry.data[CONF_NAME],
                 ),
             ],
         )
@@ -93,6 +95,7 @@ async def async_setup_entry(
                     entry.data[CONF_MAC],
                     entry.data[CONF_TYPE],
                     entry.data[CONF_CFG],
+                    entry.data[CONF_NAME],
                 ).get_sub_entities()
             )
 
@@ -115,6 +118,7 @@ class Hcm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
+        name: str = None,
     ) -> None:
         super().__init__(
             ip,
@@ -122,13 +126,14 @@ class Hcm300(SihasProxy):
             device_type,
             config,
         )
+        self.name = name
 
     def get_sub_entities(self) -> List[Entity]:
         req = pb.poll()
         resp = send(req, self.ip)
         self.registers = pb.extract_registers(resp)
         number_of_room = self.registers[HCM_REG_NUMBER_OF_ROOMS]
-        return [HcmVirtualThermostat(self, i) for i in range(0, number_of_room)]
+        return [HcmVirtualThermostat(self, i, self.name) for i in range(0, number_of_room)]
 
 
 class HcmVirtualThermostat(ClimateEntity):
@@ -141,7 +146,7 @@ class HcmVirtualThermostat(ClimateEntity):
     _attr_target_temperature_step: Final = 1
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
-    def __init__(self, proxy: Hcm300, number_of_room: int) -> None:
+    def __init__(self, proxy: Hcm300, number_of_room: int, name: str = None) -> None:
         super().__init__()
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
 
@@ -149,8 +154,8 @@ class HcmVirtualThermostat(ClimateEntity):
         self._proxy = proxy
         self._attr_available = self._proxy._attr_available
         self._room_register_index = HCM_REG_STATE_START + number_of_room
-        self._attr_name = uid
         self._attr_unique_id = uid
+        self._attr_name = name + number_of_room if name else self._attr_unique_id
 
     def set_hvac_mode(self, hvac_mode: str):
         self._proxy.command(
@@ -250,12 +255,14 @@ class Acm300(SihasEntity, ClimateEntity):
         mac: str,
         device_type: str,
         config: int,
+        name: str = None,
     ):
         super().__init__(
             ip=ip,
             mac=mac,
             device_type=device_type,
             config=config,
+            name=name,
         )
 
         # init hass defined variable

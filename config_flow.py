@@ -62,11 +62,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self.data["type"] not in SUPPORT_DEVICE:
             return self.async_abort(reason=f"not supported device type: {self.data['type']}")
 
-        # set uid and abort if exist
-        # but, should I config at here?
-        #
-        # await self.async_set_unique_id(self.brother.serial.lower())
-        # self._abort_if_unique_id_configured()
+        # TODO: have to define uid at here, but device may has varity
+        await self.async_set_unique_id(self.data["mac"])
+        self._abort_if_unique_id_configured()
 
         # display device on integrations page to advertise to user
         self.context.update(
@@ -109,6 +107,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+
+        await self.async_set_unique_id(self.data["mac"])
+        self._abort_if_unique_id_configured()
+
         _LOGGER.warn(f"starting SiHAS user step: {user_input=}")
 
 

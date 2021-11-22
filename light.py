@@ -41,8 +41,6 @@ async def async_setup_entry(
             name=entry.data[CONF_NAME],
         )
         async_add_entities(stm_sbm.get_sub_entities())
-    else:
-        raise NotImplementedError(f"not implemented device type: {entry.data[CONF_TYPE]}")
 
 
 class StmSbm300(SihasProxy):

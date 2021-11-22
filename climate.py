@@ -105,8 +105,6 @@ async def async_setup_entry(
             _LOGGER.error(
                 f"failed to add device <{entry.data[CONF_TYPE]}, {entry.data[CONF_IP]}>, be sure IP is correct and restart HA to load HCM: {e}"
             )
-    else:
-        raise NotImplementedError(f"not implemented device type: {entry.data[CONF_TYPE]}")
     return
 
 

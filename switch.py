@@ -57,9 +57,6 @@ def setup_platform(
             ],
         )
 
-    else:
-        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
-
 
 class Ccm300(SihasEntity, SwitchEntity):
     _attr_icon = ICON_POWER_SOCKET

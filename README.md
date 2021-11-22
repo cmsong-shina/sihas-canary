@@ -23,154 +23,7 @@
 
 # 설정
 
-## 앱에서 로컬 통신 활성화
-
-> 주의: 신뢰 할 수 있는 네트워크에서만 Home Assistant 연동을 사용하세요.
-
-앱 → 장치 상세 화면 → 설정 속성 → 장치 정보 페이지로 이동 후 아래 설정을 수행합니다.
-
-* 펌웨어 버전을 최신 버전으로 업데이트
-
-* HA 설정을 활성화
-
-
-
-## IP 고정 할당
-
-공유기에서 해당 장치에 고정 IP를 할당 합니다.
-
-
-
-## configuration.yaml 에 장치 추가
-
-다음과 같은 구성을 추가합니다. 필요한 정보는 앱 → 장치 정보 페이지에서 찾을 수 있습니다.
-
-```yaml
-<base_entity>:
-  - platform: sihas_canary
-    type: <type_of_device>
-    ip: <ip>
-    mac: <mac>
-    cfg: <cfg>
-    # scan_interval: 10
-```
-
-* **필수**
-
-  * `<base_entity>`: climate, light, switch 등. 하기 [장치목록](#장치목록) 참조.
-
-  * `<type_of_device>`: ACM, STM 등. 하기 [장치목록](#장치목록) 참조.
-
-  * `<ip>`: 장치에 할당한 고정 IP
-
-    > NOTE: 앱이 아닌 공유기에서 확인하는것이 정확합니다. (서버 통신시 업데이트가 되지 않음)
-
-    예) `192.168.1.101 `
-
-  * `<mac>`: 장치 맥주소, `:`로 구분된 12자리 16진수 문자열, 소문자
-
-    예) `a8:2b:d6:12:34:56`
-
-  * `<cfg>`: 앱 → 장치 정보 → 컨피그에서 확인 가능한 장치 설정값, 숫자
-
-* **선택**
-
-  * `<scan-interval>`: 업데이트 주기(초), 3~10 사이로 설정 권장, 미설정시 기본값 30초([HA spec 참조](https://www.home-assistant.io/docs/configuration/platform_options#scan-interval))
-
-
-
-### 장치목록
-
-#### Climate
-
-* `ACM`
-* `HCM`
-
-
-
-#### Light
-
-* `STM`
-* `SBM`
-
-
-
-#### Switch
-
-* `CCM`
-
-
-
-#### Sensor
-
-* `AQM`
-* `PMM`
-
-
-
-#### 예시
-
-```yaml
-# sihas_canary integration
-switch:
-  #CCM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: CCM
-    cfg: 1
-
-light:
-  #STM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: STM
-    cfg: 3
-    scan_interval: 3
-
-  #SBM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: SBM
-    cfg: 1
-    scan_interval: 3
-
-climate:
-  # HCM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: HCM
-    cfg: 0
-    scan_interval: 4
-
-  # ACM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: ACM
-    cfg: 1
-    scan_interval: 4
-
-sensor:
-  # PMM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: PMM
-    cfg: 0
-    scan_interval: 15
-
-  # AQM
-  - platform: sihas_canary
-    ip: 192.168.1.1
-    mac: a8:2b:d6:12:34:56
-    type: AQM
-    cfg: 0
-    scan_interval: 15
-```
+> Zeroconf를 사용한 등록으로 변경되었습니다. `configuration.yaml`을 사용하여 수동으로 등록하는 방법은 [v1.0.2](https://github.com/cmsong-shina/sihas-canary/tree/v1.0.2)를 참조하세요.
 
 
 
@@ -194,17 +47,15 @@ sensor:
 
 
 
-# 업데이트
+### 업데이트
 
-### 최신 버전으로 업데이트
+#### 최신 버전으로 업데이트
 
 ```bash
 cd <config_dir>/custom_components/sihas_canary && git pull
 ```
 
-
-
-### 특정 버전으로 변경
+#### 특정 버전으로 변경
 
 ```bash
 $ git tag
@@ -214,6 +65,25 @@ v1.0.2
 
 $ git checkout v1.0.0
 ```
+
+
+
+## 앱에서 로컬 통신 활성화
+
+> 주의: 신뢰 할 수 있는 네트워크에서만 Home Assistant 연동을 사용하세요.
+
+앱 → 장치 상세 화면 → 설정 속성 → 장치 정보 페이지로 이동 후 아래 설정을 수행합니다.
+
+* 펌웨어 버전을 최신 버전으로 업데이트
+* HA 설정을 활성화
+
+
+
+## 통합 구성요소 찾기
+
+`홈어시스턴트 웹` → `구성하기` → `통합 구성요소`에 나타난 장치를 설정 합니다.
+
+나타나는 장치가 없을 경우, [mDNS 관련 문제](#mDNS-관련-문제)를 참조하세요.
 
 
 
@@ -246,3 +116,43 @@ HA 설정여부와 장치의 IP가 올바르게 설정 되어 있는지 확인�
 ## Q. 앱에서 HA 설정이 확인중에서 바뀌지 않습니다.
 
 장치 펌웨어를 업데이트 해주세요.
+
+
+
+
+
+# Known issue
+
+#### mDNS 관련 문제
+
+펌웨어에서 사용중인 라이브러리가 mDNS 다중 서비스 검색을 지원하지 않습니다.
+
+단일 서비스 검색을 수행하기 위해 [avahi](https://www.avahi.org/) 혹은 [파이썬 스크립트](https://github.com/jstasiak/python-zeroconf)를 사용하여 등록할 수 있습니다.
+
+```bash
+$ avahi-browse _sihas._tcp
++ wlp3s0 IPv4 sihas_acm_abcdef                              _sihas._tcp          local
+```
+
+```python
+from zeroconf import ServiceBrowser, Zeroconf
+
+
+class MyListener:
+    def remove_service(self, zeroconf, type, name):
+        print("Service %s removed" % (name,))
+
+    def add_service(self, zeroconf, type, name):
+        info = zeroconf.get_service_info(type, name)
+        print("Service %s added, service info: %s" % (name, info))
+
+
+zeroconf = Zeroconf()
+listener = MyListener()
+browser = ServiceBrowser(zeroconf, ["_sihas._tcp.local."], listener)
+try:
+    input("Press enter to exit...\n\n")
+finally:
+    zeroconf.close()
+
+```

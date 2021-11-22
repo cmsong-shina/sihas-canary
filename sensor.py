@@ -5,6 +5,7 @@ import logging
 from typing import Dict, List
 
 from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL, SensorEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_BILLION,
@@ -123,29 +124,26 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
 }
 
 
-def setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if config[CONF_TYPE] == "PMM":
+    if entry.data[CONF_TYPE] == "PMM":
         pmm = Pmm300(
-            ip=config[CONF_IP],
-            mac=config[CONF_MAC],
-            device_type=config[CONF_TYPE],
-            config=config[CONF_CFG],
+            ip=entry.data[CONF_IP],
+            mac=entry.data[CONF_MAC],
+            device_type=entry.data[CONF_TYPE],
+            config=entry.data[CONF_CFG],
         )
-        add_entities(pmm.get_sub_entities())
+        async_add_entities(pmm.get_sub_entities())
 
-    elif config[CONF_TYPE] == "AQM":
+    elif entry.data[CONF_TYPE] == "AQM":
         aqm = Aqm300(
-            ip=config[CONF_IP],
-            mac=config[CONF_MAC],
-            device_type=config[CONF_TYPE],
-            config=config[CONF_CFG],
+            ip=entry.data[CONF_IP],
+            mac=entry.data[CONF_MAC],
+            device_type=entry.data[CONF_TYPE],
+            config=entry.data[CONF_CFG],
         )
-        add_entities(aqm.get_sub_entities())
+        async_add_entities(aqm.get_sub_entities())
 
 
 class Pmm300(SihasProxy):
@@ -155,6 +153,7 @@ class Pmm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
+        name: str = None,
     ):
         super().__init__(
             ip=ip,
@@ -162,6 +161,7 @@ class Pmm300(SihasProxy):
             device_type=device_type,
             config=config,
         )
+        self.name = name
 
     def get_sub_entities(self) -> List[Entity]:
         return [
@@ -180,7 +180,9 @@ class PmmVirtualSensor(SensorEntity):
         self._attr_available = self._proxy._attr_available
         self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
         self._attr_native_unit_of_measurement = conf["nuom"]
-        self._attr_name = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
+        self._attr_name = (
+            proxy.name if proxy.name else f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
+        )
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 
@@ -212,6 +214,7 @@ class Aqm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
+        name: str = None,
     ):
         super().__init__(
             ip=ip,
@@ -219,6 +222,7 @@ class Aqm300(SihasProxy):
             device_type=device_type,
             config=config,
         )
+        self.name = name
 
     def get_sub_entities(self) -> List[Entity]:
         return [
@@ -240,7 +244,9 @@ class AqmVirtualSensor(SensorEntity):
         self._attr_available = self._proxy._attr_available
         self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['device_class']}"
         self._attr_unit_of_measurement = conf["uom"]
-        self._attr_name = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
+        self._attr_name = (
+            proxy.name if proxy.name else f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
+        )
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 

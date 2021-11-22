@@ -4,12 +4,13 @@ from __future__ import annotations
 import logging
 from typing import Any, List
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.components import zeroconf
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.typing import DiscoveryInfoType
-import homeassistant.helpers.config_validation as cv
 
 from .const import (
     CONF_CFG,
@@ -107,11 +108,28 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input:
+            self.data["ip"] = user_input["ip"]
+            self.data["mac"] = user_input["mac"]
+            self.data["type"] = user_input["type"]
+            self.data["cfg"] = user_input["cfg"]
+            self.data["nickname"] = user_input["nickname"]
+            return self.async_create_entry(
+                title=self.data["type"],
+                data=self.data,
+            )
 
-        await self.async_set_unique_id(self.data["mac"])
-        self._abort_if_unique_id_configured()
+        DATA_SCHEMA = vol.Schema(
+            {
+                vol.Required("ip"): str,
+                vol.Required("mac"): str,
+                vol.Required("type"): vol.In(SUPPORT_DEVICE),
+                vol.Required("cfg"): int,
+                vol.Required("nickname"): str,
+            }
+        )
 
-        _LOGGER.warn(f"starting SiHAS user step: {user_input=}")
+        return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
 
 
 class CannotConnect(HomeAssistantError):

@@ -11,9 +11,11 @@
         "step": {
             "user": {
                 "data": {
-                    "host": "Host",
-                    "password": "Password",
-                    "username": "Username"
+                    "ip": "IP",
+                    "mac": "MAC",
+                    "type": "Type",
+                    "cfg": "Config",
+                    "nickname": "Nickname"
                 }
             },
             "zeroconf_confirm": {

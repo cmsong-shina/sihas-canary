@@ -2,6 +2,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_POWER,
@@ -39,20 +40,17 @@ PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
 
-def setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if config[CONF_TYPE] == "CCM":
-        add_entities(
+    if entry.data[CONF_TYPE] == "CCM":
+        async_add_entities(
             [
                 Ccm300(
-                    ip=config[CONF_IP],
-                    mac=config[CONF_MAC],
-                    device_type=config[CONF_TYPE],
-                    config=config[CONF_CFG],
+                    ip=entry.data[CONF_IP],
+                    mac=entry.data[CONF_MAC],
+                    device_type=entry.data[CONF_TYPE],
+                    config=entry.data[CONF_CFG],
                 ),
             ],
         )
@@ -67,12 +65,14 @@ class Ccm300(SihasEntity, SwitchEntity):
         mac: str,
         device_type: str,
         config: int,
+        name: str = None,
     ):
         super().__init__(
             ip=ip,
             mac=mac,
             device_type=device_type,
             config=config,
+            name=name,
         )
 
     @property

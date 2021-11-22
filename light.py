@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from typing import List
 
+from homeassistant.components.light import LightEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity

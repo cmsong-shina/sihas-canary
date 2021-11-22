@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from typing import List
 
-from homeassistant.components.light import LightEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -14,6 +14,7 @@ from .const import (
     CONF_CFG,
     CONF_IP,
     CONF_MAC,
+    CONF_NAME,
     CONF_TYPE,
     DEFAULT_PARALLEL_UPDATES,
     ICON_LIGHT_BULB,
@@ -27,22 +28,20 @@ PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 
 
-def setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if config[CONF_TYPE] in ["STM", "SBM"]:
+    if entry.data[CONF_TYPE] in ["STM", "SBM"]:
         stm_sbm = StmSbm300(
-            ip=config[CONF_IP],
-            mac=config[CONF_MAC],
-            device_type=config[CONF_TYPE],
-            config=config[CONF_CFG],
+            ip=entry.data[CONF_IP],
+            mac=entry.data[CONF_MAC],
+            device_type=entry.data[CONF_TYPE],
+            config=entry.data[CONF_CFG],
+            name=entry.data[CONF_NAME],
         )
-        add_entities(stm_sbm.get_sub_entities())
+        async_add_entities(stm_sbm.get_sub_entities())
     else:
-        raise NotImplementedError(f"not implemented device type: {config[CONF_TYPE]}")
+        raise NotImplementedError(f"not implemented device type: {entry.data[CONF_TYPE]}")
 
 
 class StmSbm300(SihasProxy):
@@ -54,6 +53,7 @@ class StmSbm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
+        name: str = None,
     ):
         super().__init__(
             ip=ip,
@@ -61,15 +61,16 @@ class StmSbm300(SihasProxy):
             device_type=device_type,
             config=config,
         )
+        self.name = name
 
     def get_sub_entities(self) -> List[Entity]:
-        return [StmSbmVirtualLight(self, i) for i in range(0, self.config)]
+        return [StmSbmVirtualLight(self, i, self.name) for i in range(0, self.config)]
 
 
 class StmSbmVirtualLight(LightEntity):
     _attr_icon = ICON_LIGHT_BULB
 
-    def __init__(self, stbm: StmSbm300, number_of_switch: int):
+    def __init__(self, stbm: StmSbm300, number_of_switch: int, name: str = None):
         super().__init__()
 
         uid = f"{stbm.device_type}-{stbm.mac}-{number_of_switch}"
@@ -78,7 +79,8 @@ class StmSbmVirtualLight(LightEntity):
         self._attr_available = self._proxy._attr_available
         self._state = None
         self._number_of_switch = number_of_switch
-        self._attr_name = uid
+        self._attr_unique_id = uid
+        self._attr_name = f"{name}-{number_of_switch}" if name else uid
         self._attr_unique_id = uid
 
     @property

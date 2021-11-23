@@ -23,3 +23,12 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
             retry -= 1
 
     raise socket.timeout
+
+
+def scan(data: bytes, ip: str) -> bytes:
+    """Send scan packet to device"""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    sock.sendto(data, (ip, 502))
+    sock.settimeout(DEFAULT_TIMEOUT)
+    return sock.recv(BUF_SIZE)

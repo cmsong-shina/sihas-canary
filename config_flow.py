@@ -23,7 +23,7 @@ from .const import (
     SUPPORT_DEVICE,
 )
 from .packet_builder import packet_builder as pb
-from .sender import send
+from .sender import scan, send
 from .sihas_base import SihasBase
 from .util import MacConv, parse_scan_message
 
@@ -115,7 +115,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         ip = discovery_info.get("ip")
         # SiHAS Scan
-        if resp := send(pb.scan(mac=discovery_info["macaddress"][6:])):
+        if resp := scan(pb.scan(mac=discovery_info["macaddress"][6:]), ip):
             scan_info = parse_scan_message(resp)
             self.data["ip"] = scan_info["ip"]
             self.data["mac"] = scan_info["mac"].lower()

@@ -15,7 +15,7 @@
                     "mac": "MAC",
                     "type": "Type",
                     "cfg": "Config",
-                    "nickname": "Nickname"
+                    "name": "Name of device"
                 },
                 "description": "Manually setting-up device.\nSet static IP to device before next step.",
                 "title": "Add SiHAS Device"

@@ -111,7 +111,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data["mac"] = user_input["mac"]
             self.data["type"] = user_input["type"]
             self.data["cfg"] = user_input["cfg"]
-            self.data["nickname"] = user_input["nickname"]
+            self.data["name"] = user_input["name"]
             return self.async_create_entry(
                 title=self.data["type"],
                 data=self.data,
@@ -123,7 +123,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("mac"): str,
                 vol.Required("type"): vol.In(SUPPORT_DEVICE),
                 vol.Required("cfg"): int,
-                vol.Required("nickname"): str,
+                vol.Required("name"): str,
             }
         )
 

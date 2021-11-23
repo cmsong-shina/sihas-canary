@@ -40,6 +40,7 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "HCM",
     "SBM",
     "PMM",
+    "SDM",
     "STM",
 ]
 

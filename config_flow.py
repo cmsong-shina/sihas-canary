@@ -38,13 +38,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.data: map = {}
 
     async def async_step_zeroconf(self, discovery_info: DiscoveryInfoType) -> FlowResult:
-        _LOGGER.debug("***** SiHAS device found by zeroconf: %s", discovery_info)
+        _LOGGER.debug("device found by zeroconf: %s", discovery_info)
 
         # {
         #     "host": "192.168.3.17",
         #     "hostname": "sihas_acm_0a2998.local.",
         #     "properties": {
-        #         "vendor ": " Espressif",
         #         "version": "1.35",
         #         "type": "acm",
         #         "cfg": "0"
@@ -54,7 +53,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # ['sihas', 'acm', '0a2998']
         hostname_parts: List[str] = discovery_info[CONF_HOSTNAME].split(".")[0].split("_")
 
-        # self.data.name = "디폴트"
         self.data["ip"] = discovery_info[CONF_HOST]
         self.data["mac"] = MacConv.insert_colon(MAC_OUI + hostname_parts[2]).lower()
         self.data["type"] = hostname_parts[1].upper()
@@ -63,7 +61,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self.data["type"] not in SUPPORT_DEVICE:
             return self.async_abort(reason=f"not supported device type: {self.data['type']}")
 
-        # TODO: have to define uid at here, but device may has varity
         await self.async_set_unique_id(self.data["mac"])
         self._abort_if_unique_id_configured()
 
@@ -109,6 +106,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input:
+            # TODO: may need to confirm user input and check communicate with device.
             self.data["ip"] = user_input["ip"]
             self.data["mac"] = user_input["mac"]
             self.data["type"] = user_input["type"]

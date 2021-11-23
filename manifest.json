@@ -8,7 +8,7 @@
   ],
   "dhcp": [
     {
-      "hostname": "ESP*",
+      "hostname": "esp*",
       "macaddress": "A82BD6*"
     }
   ],

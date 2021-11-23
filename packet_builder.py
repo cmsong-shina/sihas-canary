@@ -19,6 +19,9 @@ HEADER_LENGTH: Final = 7
 class packet_builder:
     _pid = 0
 
+    def scan(type: str = "XXX", mac: str = "???"):
+        return f"SiHAS_{type}_{mac}"
+
     def pid() -> int:
         if packet_builder._pid >= 0xFF:
             packet_builder._pid = 0

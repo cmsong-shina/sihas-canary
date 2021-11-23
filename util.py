@@ -1,6 +1,6 @@
 from datetime import datetime
 from types import FunctionType
-from typing import List
+from typing import List, Tuple
 
 from .const import DEFAULT_DEBOUNCE_DURATION
 
@@ -43,3 +43,18 @@ class MacConv:
 
     def remove_colon(s: str):
         return s.replace(":", "")
+
+
+def parse_scan_message(msg: str) -> Tuple:
+    type = msg[6:9]
+    version = msg[11:16]
+    mac = msg[21:38]
+    ip = msg[42:57]
+    config = int(msg[62:64], 16)
+
+    return {
+        "type": type,
+        "mac": mac,
+        "ip": ip,
+        "cfg": config,
+    }

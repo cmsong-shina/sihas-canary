@@ -22,8 +22,10 @@ from .const import (
     MAC_OUI,
     SUPPORT_DEVICE,
 )
+from .packet_builder import packet_builder as pb
+from .sender import send
 from .sihas_base import SihasBase
-from .util import MacConv
+from .util import MacConv, parse_scan_message
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,6 +105,26 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "type": self.data["type"],
             },
         )
+
+    # NOTE: this feature assumed does not work in develop environment(HA Core)
+    #       so deploy on production enviornment and test.
+    async def async_step_dhcp(self, discovery_info: DiscoveryInfoType):
+        # data will come like
+        #  {'ip': '192.168.xxx.xxx', 'hostname': 'ESP[-_][0-9A-F]{12}', 'macaddress': '123456abcdef'}
+
+        ip = discovery_info.get("ip")
+        # SiHAS Scan
+        if resp := send(pb.scan(mac=discovery_info["macaddress"][6:])):
+            scan_info = parse_scan_message(resp)
+            self.data["ip"] = scan_info["ip"]
+            self.data["mac"] = scan_info["mac"].lower()
+            self.data["type"] = scan_info["type"]
+            self.data["cfg"] = scan_info["cfg"]
+
+            return await self.async_step_zeroconf_confirm()
+        else:
+            _LOGGER.warn("found dhcp device but did not response about scan", discovery_info)
+            return self.async_abort()
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input:

@@ -6,6 +6,12 @@
   "zeroconf": [
     "_sihas._tcp.local."
   ],
+  "dhcp": [
+    {
+      "hostname": "ESP*",
+      "macaddress": "A82BD6*"
+    }
+  ],
   "codeowners": [
     "@cmsong-shina"
   ],

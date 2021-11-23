@@ -110,7 +110,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     #       so deploy on production enviornment and test.
     async def async_step_dhcp(self, discovery_info: DiscoveryInfoType):
         # data will come like
-        #  {'ip': '192.168.xxx.xxx', 'hostname': 'ESP[-_][0-9A-F]{12}', 'macaddress': '123456abcdef'}
+        #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
+        _LOGGER.info(f"sihas device found via dhcp: {discovery_info}")
 
         ip = discovery_info.get("ip")
         # SiHAS Scan
@@ -123,7 +124,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             return await self.async_step_zeroconf_confirm()
         else:
-            _LOGGER.warn("found dhcp device but did not response about scan", discovery_info)
+            _LOGGER.warn("found device but did not response about scan", discovery_info)
             return self.async_abort()
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:

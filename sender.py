@@ -29,7 +29,7 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
     raise socket.timeout
 
 
-def scan(data: bytes, ip: str) -> typing.Optional[bytes]:
+def scan(data: bytes, ip: str) -> typing.Optional[str]:
     retry = 3
     while retry:
         try:
@@ -37,7 +37,7 @@ def scan(data: bytes, ip: str) -> typing.Optional[bytes]:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(data, (ip, 502))
             sock.settimeout(2)
-            return sock.recv(BUF_SIZE)
+            return sock.recv(BUF_SIZE).decode()
         except socket.timeout:
             retry -= 1
         except Exception as e:

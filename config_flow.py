@@ -125,7 +125,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # SiHAS Scan
         if resp := scan(pb.scan(), ip):
-            scan_info = parse_scan_message(str(resp))
+            scan_info = parse_scan_message(resp)
             _LOGGER.debug(f"sihas device scanned: {scan_info}")
             if not scan_info["mac"] == MacConv.insert_colon(mac):
                 _LOGGER.debug(

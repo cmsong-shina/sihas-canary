@@ -1,6 +1,5 @@
 from datetime import datetime
-from types import FunctionType
-from typing import Dict, List, Tuple
+from typing import Callable, Dict
 
 from .const import DEFAULT_DEBOUNCE_DURATION
 
@@ -15,7 +14,7 @@ class Debouncer:
         _last_excuted    last excuted time
     """
 
-    def __init__(self, callback: FunctionType, duration: int = DEFAULT_DEBOUNCE_DURATION) -> None:
+    def __init__(self, callback: Callable, duration: int = DEFAULT_DEBOUNCE_DURATION) -> None:
         self._last_excuted = datetime.now()
         self._duration = duration
         self._callback = callback

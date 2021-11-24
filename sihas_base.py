@@ -1,10 +1,9 @@
 import logging
 import socket
-from typing import Final, List, Optional
+from typing import List, Optional
 
 from homeassistant.helpers.entity import Entity
 
-from .const import DEFAULT_DEBOUNCE_DURATION
 from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send

@@ -29,8 +29,7 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
     raise socket.timeout
 
 
-def scan(data: bytes, ip: str) -> typing.Optional[str]:
-    retry = 3
+def scan(data: bytes, ip: str, retry: int = 10) -> typing.Optional[str]:
     while retry:
         try:
             _LOGGER.debug(f"scanning device, {ip=} {data=}")

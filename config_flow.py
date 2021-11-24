@@ -106,8 +106,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    # NOTE: this feature assumed does not work in develop environment(HA Core)
-    #       so deploy on production enviornment and test.
+    # NOTE:
+    #   DHCP discovery assumed does not work in develop environment(via VSC debugpy).
+    #   On release enviornment(such as rpi HAOS), works well.
+    #   It may associated about permission(which scapy or aiodiscover use), IMO.
     async def async_step_dhcp(self, discovery_info: DiscoveryInfoType):
         # data will come like
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
@@ -115,16 +117,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         ip = discovery_info.get("ip")
         # SiHAS Scan
-        if resp := scan(pb.scan(mac=discovery_info["macaddress"][6:]), ip):
+        if resp := scan(pb.scan(), ip):
             scan_info = parse_scan_message(resp)
+            if not scan_info["mac"] == MacConv.insert_colon(discovery_info.get("mac")):
+                return self.async_abort("found device but ip does not corret")
+
             self.data["ip"] = scan_info["ip"]
             self.data["mac"] = scan_info["mac"].lower()
             self.data["type"] = scan_info["type"]
             self.data["cfg"] = scan_info["cfg"]
-
             return await self.async_step_zeroconf_confirm()
+
         else:
-            _LOGGER.warn("found device but did not response about scan", discovery_info)
+            # if not match, abort
+            _LOGGER.warn(f"found device but did not response about scan: {discovery_info}")
             return self.async_abort()
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:

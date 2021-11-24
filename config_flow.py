@@ -111,7 +111,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_dhcp(self, discovery_info: DiscoveryInfoType):
         # data will come like
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
-        _LOGGER.info(f"sihas device found via dhcp: {discovery_info}")
+        _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
 
         ip = discovery_info.get("ip")
         # SiHAS Scan

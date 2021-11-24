@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from datetime import timedelta
 
 from homeassistant.components.switch import SwitchEntity
@@ -11,13 +12,13 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
 from .const import (
     CONF_CFG,
     CONF_IP,
     CONF_MAC,
+    CONF_NAME,
     CONF_TYPE,
     DEFAULT_PARALLEL_UPDATES,
     ICON_POWER_SOCKET,
@@ -51,6 +52,7 @@ async def async_setup_entry(
                     mac=entry.data[CONF_MAC],
                     device_type=entry.data[CONF_TYPE],
                     config=entry.data[CONF_CFG],
+                    name=entry.data[CONF_NAME],
                 ),
             ],
         )

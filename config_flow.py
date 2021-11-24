@@ -117,14 +117,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
         _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
 
-        await self.async_set_unique_id(self.data["mac"])
-        self._abort_if_unique_id_configured()
-
         # wait for device
         time.sleep(10)
 
         ip = cast(str, discovery_info.get("ip"))
         mac = cast(str, discovery_info.get("macaddress"))
+
+        await self.async_set_unique_id(MacConv.insert_colon(mac))
+        self._abort_if_unique_id_configured()
 
         # SiHAS Scan
         if resp := scan(pb.scan(), ip):
@@ -140,7 +140,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data["mac"] = scan_info["mac"].lower()
             self.data["type"] = scan_info["type"]
             self.data["cfg"] = scan_info["cfg"]
-            _LOGGER.debug("pass to confirm")
+
+            self.context.update(
+                {
+                    "title_placeholders": {
+                        "type": self.data["type"],
+                        "mac": self.data["mac"],
+                    }
+                }
+            )
+
             return await self.async_step_zeroconf_confirm()
 
         else:

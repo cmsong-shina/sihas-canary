@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import StringTemplateStyle
 from typing import Callable, Dict
 
 from .const import DEFAULT_DEBOUNCE_DURATION
@@ -29,6 +30,15 @@ class Debouncer:
             self._callback()
             return True
         return False
+
+
+class IpConv:
+    @staticmethod
+    def remove_leading_zero(s: str) -> str:
+        # ".".join([str(int(i)) for i in ip.split(".")])
+        import re
+
+        return re.sub(r"\b0+(\d)", r"\1", s)
 
 
 class MacConv:

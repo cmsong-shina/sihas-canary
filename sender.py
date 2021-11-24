@@ -4,6 +4,7 @@ import typing
 
 from .const import BUF_SIZE, DEFAULT_TIMEOUT, PORT
 from .errors import ModbusNotEnabledError
+from .util import IpConv
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,6 +14,8 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
 
     Raise ModbusNotEnabledError, socket.timeout and others
     """
+
+    ip = IpConv.remove_leading_zero(ip)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     while retry:
         try:

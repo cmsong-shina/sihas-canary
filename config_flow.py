@@ -131,7 +131,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             # if not match, abort
             _LOGGER.warn(f"found device but did not response about scan: {discovery_info}")
-            return self.async_abort()
+            return self.async_abort("can not scan found device")
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input:

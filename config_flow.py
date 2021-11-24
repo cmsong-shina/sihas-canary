@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List
+import time
+import asyncio
+from typing import Any, Dict, List, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -37,7 +39,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self.sihas: SihasBase
-        self.data: map = {}
+        self.data: Dict[str, Any] = {}
 
     async def async_step_zeroconf(self, discovery_info: DiscoveryInfoType) -> FlowResult:
         _LOGGER.debug("device found by zeroconf: %s", discovery_info)
@@ -115,23 +117,33 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
         _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
 
-        ip = discovery_info.get("ip")
+        # wait for device
+        time.sleep(10)
+
+        ip = cast(str, discovery_info.get("ip"))
+        mac = cast(str, discovery_info.get("macaddress"))
+
         # SiHAS Scan
         if resp := scan(pb.scan(), ip):
-            scan_info = parse_scan_message(resp)
-            if not scan_info["mac"] == MacConv.insert_colon(discovery_info.get("mac")):
-                return self.async_abort("found device but ip does not corret")
+            scan_info = parse_scan_message(str(resp))
+            _LOGGER.debug(f"sihas device scanned: {scan_info}")
+            if not scan_info["mac"] == MacConv.insert_colon(mac):
+                _LOGGER.debug(
+                    f"device scanned but ip does not match: found={MacConv.insert_colon(mac)}, scanned={scan_info['mac']}"
+                )
+                return self.async_abort(reason="device scanned but ip does not match")
 
             self.data["ip"] = scan_info["ip"]
             self.data["mac"] = scan_info["mac"].lower()
             self.data["type"] = scan_info["type"]
             self.data["cfg"] = scan_info["cfg"]
+            _LOGGER.debug("pass to confirm")
             return await self.async_step_zeroconf_confirm()
 
         else:
             # if not match, abort
             _LOGGER.warn(f"found device but did not response about scan: {discovery_info}")
-            return self.async_abort("can not scan found device")
+            return self.async_abort(reason="can not scan found device")
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input:

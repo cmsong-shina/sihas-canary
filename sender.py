@@ -1,5 +1,6 @@
 import logging
 import socket
+import typing
 
 from .const import BUF_SIZE, DEFAULT_TIMEOUT, PORT
 from .errors import ModbusNotEnabledError
@@ -28,14 +29,14 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
     raise socket.timeout
 
 
-def scan(data: bytes, ip: str) -> bytes:
+def scan(data: bytes, ip: str) -> typing.Optional[bytes]:
     retry = 3
     while retry:
         try:
             _LOGGER.debug(f"scanning device, {ip=} {data=}")
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(data, (ip, 502))
-            sock.settimeout(DEFAULT_TIMEOUT)
+            sock.settimeout(2)
             return sock.recv(BUF_SIZE)
         except socket.timeout:
             retry -= 1

@@ -19,15 +19,18 @@ HEADER_LENGTH: Final = 7
 class packet_builder:
     _pid = 0
 
+    @staticmethod
     def scan(type: str = "XXX", mac: str = "???") -> bytes:
         return f"SiHAS_{type}_{mac}".encode()
 
+    @staticmethod
     def pid() -> int:
         if packet_builder._pid >= 0xFF:
             packet_builder._pid = 0
         packet_builder._pid += 1
         return packet_builder._pid
 
+    @staticmethod
     def poll() -> bytes:
         p = (
             packet_builder._build_header(6)
@@ -37,6 +40,7 @@ class packet_builder:
         )
         return p
 
+    @staticmethod
     def command(reg_idx: int, reg_val: int) -> bytes:
         _LOGGER.debug(f"setting register {reg_idx} as {reg_val}")
 
@@ -48,8 +52,9 @@ class packet_builder:
         )
         return p
 
+    @staticmethod
     def _build_header(dlen: int) -> bytes:
-        def _calc_checksum(b: bytes) -> int:
+        def _calc_checksum(b: bytes) -> bytes:
             return (sum(b) & 0xFF).to_bytes(1, ENDIAN)
 
         h = (
@@ -65,6 +70,7 @@ class packet_builder:
 
         return h
 
+    @staticmethod
     def extract_registers(p: bytes) -> List[int]:
         """
         Raise

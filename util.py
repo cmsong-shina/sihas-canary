@@ -1,6 +1,6 @@
 from datetime import datetime
 from types import FunctionType
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from .const import DEFAULT_DEBOUNCE_DURATION
 
@@ -33,6 +33,7 @@ class Debouncer:
 
 
 class MacConv:
+    @staticmethod
     def insert_colon(s: str):
         if ":" in s:
             return s
@@ -41,11 +42,12 @@ class MacConv:
         mac_parts = [s[2 * i : 2 + 2 * i] for i in range(6)]
         return ":".join(mac_parts)
 
+    @staticmethod
     def remove_colon(s: str):
         return s.replace(":", "")
 
 
-def parse_scan_message(msg: str) -> Tuple:
+def parse_scan_message(msg: str) -> Dict:
     type = msg[6:9]
     version = msg[11:16]
     mac = msg[21:38]

@@ -117,6 +117,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
         _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
 
+        await self.async_set_unique_id(self.data["mac"])
+        self._abort_if_unique_id_configured()
+
         # wait for device
         time.sleep(10)
 

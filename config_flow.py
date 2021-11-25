@@ -130,6 +130,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if resp := scan(pb.scan(), ip):
             scan_info = parse_scan_message(resp)
             _LOGGER.debug(f"sihas device scanned: {scan_info}")
+
             if not scan_info["mac"] == MacConv.insert_colon(mac):
                 _LOGGER.debug(
                     f"device scanned but ip does not match: found={MacConv.insert_colon(mac)}, scanned={scan_info['mac']}"
@@ -140,6 +141,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data["mac"] = scan_info["mac"].lower()
             self.data["type"] = scan_info["type"]
             self.data["cfg"] = scan_info["cfg"]
+
+            if self.data["type"] not in SUPPORT_DEVICE:
+                return self.async_abort(reason=f"not supported device type: {self.data['type']}")
 
             self.context.update(
                 {

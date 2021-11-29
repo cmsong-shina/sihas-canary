@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
-from typing import Dict, List
+from typing import Dict, List, cast
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
@@ -152,7 +152,7 @@ class HcmVirtualThermostat(ClimateEntity):
         self._attr_available = self._proxy._attr_available
         self._room_register_index = HCM_REG_STATE_START + number_of_room
         self._attr_unique_id = uid
-        self._attr_name = name + number_of_room if name else self._attr_unique_id
+        self._attr_name = f"{name} #{number_of_room}" if name else self._attr_unique_id
 
     def set_hvac_mode(self, hvac_mode: str):
         self._proxy.command(
@@ -161,7 +161,7 @@ class HcmVirtualThermostat(ClimateEntity):
         )
 
     def set_temperature(self, **kwargs):
-        tmp = kwargs.get(ATTR_TEMPERATURE)
+        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
         self._proxy.command(
             self._room_register_index,
             self._apply_target_temperature_on_cache(tmp),
@@ -262,14 +262,6 @@ class Acm300(SihasEntity, ClimateEntity):
             name=name,
         )
 
-        # init hass defined variable
-        self._attr_hvac_mode = None
-        self._attr_current_temperature = None
-        self._attr_target_temperature = None
-        self._attr_hvac_action = None
-        self._attr_swing_mode = None
-        self._attr_fan_mode = None
-
     def set_hvac_mode(self, hvac_mode: str):
         reg_idx = None
         reg_val = None
@@ -288,7 +280,7 @@ class Acm300(SihasEntity, ClimateEntity):
         self.command(reg_idx, reg_val)
 
     def set_temperature(self, **kwargs):
-        tmp = kwargs.get(ATTR_TEMPERATURE)
+        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
         self.command(Acm300.REG_SET_POINT, int(tmp))
 
     def set_swing_mode(self, swing_mode):

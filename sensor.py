@@ -1,8 +1,8 @@
 from __future__ import annotations
-from datetime import timedelta
 
 import logging
-from typing import Dict, List
+from datetime import timedelta
+from typing import Callable, Dict, List
 
 from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL, SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -186,7 +186,7 @@ class PmmVirtualSensor(SensorEntity):
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 
-        self.value_handler: function = conf["value_handler"]
+        self.value_handler: Callable = conf["value_handler"]
 
     def update(self):
         self._proxy.update()
@@ -250,7 +250,7 @@ class AqmVirtualSensor(SensorEntity):
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 
-        self.value_handler: function = conf["value_handler"]
+        self.value_handler: Callable = conf["value_handler"]
 
     def update(self):
         self._proxy.update()

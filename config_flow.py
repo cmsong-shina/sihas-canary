@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List
+import time
+import asyncio
+from typing import Any, Dict, List, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -22,8 +24,10 @@ from .const import (
     MAC_OUI,
     SUPPORT_DEVICE,
 )
+from .packet_builder import packet_builder as pb
+from .sender import scan, send
 from .sihas_base import SihasBase
-from .util import MacConv
+from .util import MacConv, parse_scan_message
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +39,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self.sihas: SihasBase
-        self.data: map = {}
+        self.data: Dict[str, Any] = {}
 
     async def async_step_zeroconf(self, discovery_info: DiscoveryInfoType) -> FlowResult:
         _LOGGER.debug("device found by zeroconf: %s", discovery_info)
@@ -103,6 +107,59 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "type": self.data["type"],
             },
         )
+
+    # NOTE:
+    #   DHCP discovery assumed does not work in develop environment(via VSC debugpy).
+    #   On release enviornment(such as rpi HAOS), works well.
+    #   It may associated about permission(which scapy or aiodiscover use), IMO.
+    async def async_step_dhcp(self, discovery_info: DiscoveryInfoType):
+        # data will come like
+        #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
+        _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
+
+        # wait for device
+        time.sleep(10)
+
+        ip = cast(str, discovery_info.get("ip"))
+        mac = cast(str, discovery_info.get("macaddress"))
+
+        await self.async_set_unique_id(MacConv.insert_colon(mac))
+        self._abort_if_unique_id_configured()
+
+        # SiHAS Scan
+        if resp := scan(pb.scan(), ip):
+            scan_info = parse_scan_message(resp)
+            _LOGGER.debug(f"sihas device scanned: {scan_info}")
+
+            if not scan_info["mac"] == MacConv.insert_colon(mac):
+                _LOGGER.debug(
+                    f"device scanned but ip does not match: found={MacConv.insert_colon(mac)}, scanned={scan_info['mac']}"
+                )
+                return self.async_abort(reason="device scanned but ip does not match")
+
+            self.data["ip"] = scan_info["ip"]
+            self.data["mac"] = scan_info["mac"].lower()
+            self.data["type"] = scan_info["type"]
+            self.data["cfg"] = scan_info["cfg"]
+
+            if self.data["type"] not in SUPPORT_DEVICE:
+                return self.async_abort(reason=f"not supported device type: {self.data['type']}")
+
+            self.context.update(
+                {
+                    "title_placeholders": {
+                        "type": self.data["type"],
+                        "mac": self.data["mac"],
+                    }
+                }
+            )
+
+            return await self.async_step_zeroconf_confirm()
+
+        else:
+            # if not match, abort
+            _LOGGER.warn(f"found device but did not response about scan: {discovery_info}")
+            return self.async_abort(reason="can not scan found device")
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input:

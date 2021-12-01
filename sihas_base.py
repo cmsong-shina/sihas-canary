@@ -143,12 +143,14 @@ class SihasEntity(SihasBase, Entity):
         self._attr_name = name if name else self._attr_unique_id
 
         # init empty value
+        self._attributes = {}
         self._state = None
 
     @property
     def extra_state_attributes(self) -> dict:
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
+            **self._attributes,
             CONF_MAC: self.mac,
             CONF_TYPE: self.device_type,
         }

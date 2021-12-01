@@ -2,10 +2,10 @@ import logging
 import socket
 from typing import List, Optional
 
-from config.custom_components.sihas_canary.const import ATTRIBUTION, CONF_MAC, CONF_TYPE
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
 
+from .const import ATTRIBUTION, CONF_MAC, CONF_TYPE
 from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send

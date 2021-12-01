@@ -67,10 +67,10 @@ class SihasBase:
             _LOGGER.warn("failed to update: modbus not enabled <%s, %s>", self.device_type, self.ip)
 
         except socket.timeout:
-            _LOGGER.info("failed to update: timeout <%s, %s>", self.device_type, self.ip)
+            _LOGGER.debug("failed to update: timeout <%s, %s>", self.device_type, self.ip)
 
         except Exception as err:
-            _LOGGER.warn(
+            _LOGGER.error(
                 "failed to update: unhandled exception: %s <%s, %s>",
                 err,
                 self.device_type,

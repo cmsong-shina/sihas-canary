@@ -1,9 +1,9 @@
 """Config flow for sihas_canary integration."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
-import asyncio
 from typing import Any, Dict, List, cast
 
 import homeassistant.helpers.config_validation as cv
@@ -18,8 +18,11 @@ from .const import (
     CONF_CFG,
     CONF_HOST,
     CONF_HOSTNAME,
+    CONF_IP,
+    CONF_MAC,
     CONF_NAME,
     CONF_PROP,
+    CONF_TYPE,
     DOMAIN,
     MAC_OUI,
     SUPPORT_DEVICE,
@@ -57,23 +60,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # ['sihas', 'acm', '0a2998']
         hostname_parts: List[str] = discovery_info[CONF_HOSTNAME].split(".")[0].split("_")
 
-        self.data["ip"] = discovery_info[CONF_HOST]
-        self.data["mac"] = MacConv.insert_colon(MAC_OUI + hostname_parts[2]).lower()
-        self.data["type"] = hostname_parts[1].upper()
-        self.data["cfg"] = int(discovery_info[CONF_PROP][CONF_CFG], 16)
+        self.data[CONF_IP] = discovery_info[CONF_HOST]
+        self.data[CONF_MAC] = MacConv.insert_colon(MAC_OUI + hostname_parts[2]).lower()
+        self.data[CONF_TYPE] = hostname_parts[1].upper()
+        self.data[CONF_CFG] = int(discovery_info[CONF_PROP][CONF_CFG], 16)
 
-        if self.data["type"] not in SUPPORT_DEVICE:
-            return self.async_abort(reason=f"not supported device type: {self.data['type']}")
+        if self.data[CONF_TYPE] not in SUPPORT_DEVICE:
+            return self.async_abort(reason=f"not supported device type: {self.data[CONF_TYPE]}")
 
-        await self.async_set_unique_id(self.data["mac"])
-        self._abort_if_unique_id_configured()
+        await self.async_set_unique_id(self.data[CONF_MAC])
+        self._abort_if_unique_id_configured(updates={CONF_IP: discovery_info[CONF_HOST]})
 
         # display device on integrations page to advertise to user
         self.context.update(
             {
                 "title_placeholders": {
-                    "type": self.data["type"],
-                    "mac": self.data["mac"],
+                    CONF_TYPE: self.data[CONF_TYPE],
+                    CONF_MAC: self.data[CONF_MAC],
                 }
             }
         )
@@ -85,9 +88,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
 
         if user_input:
-            self.data["name"] = user_input["name"]
+            self.data[CONF_NAME] = user_input[CONF_NAME]
             return self.async_create_entry(
-                title=self.data["type"],
+                title=self.data[CONF_TYPE],
                 data=self.data,
             )
 
@@ -97,14 +100,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_NAME, default=self.data["type"] + self.data["mac"]
+                        CONF_NAME, default=self.data[CONF_TYPE] + self.data[CONF_MAC]
                     ): cv.string,
                 }
             ),
             # description_placeholders will used to format string
             description_placeholders={
-                "mac": self.data["mac"],
-                "type": self.data["type"],
+                CONF_MAC: self.data[CONF_MAC],
+                CONF_TYPE: self.data[CONF_TYPE],
             },
         )
 
@@ -120,7 +123,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # wait for device
         time.sleep(10)
 
-        ip = cast(str, discovery_info.get("ip"))
+        ip = cast(str, discovery_info.get(CONF_IP))
         mac = cast(str, discovery_info.get("macaddress"))
 
         await self.async_set_unique_id(MacConv.insert_colon(mac))
@@ -131,25 +134,25 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             scan_info = parse_scan_message(resp)
             _LOGGER.debug(f"sihas device scanned: {scan_info}")
 
-            if not scan_info["mac"] == MacConv.insert_colon(mac):
+            if not scan_info[CONF_MAC] == MacConv.insert_colon(mac):
                 _LOGGER.debug(
-                    f"device scanned but ip does not match: found={MacConv.insert_colon(mac)}, scanned={scan_info['mac']}"
+                    f"device scanned but ip does not match: found={MacConv.insert_colon(mac)}, scanned={scan_info[CONF_MAC]}"
                 )
                 return self.async_abort(reason="device scanned but ip does not match")
 
-            self.data["ip"] = scan_info["ip"]
-            self.data["mac"] = scan_info["mac"].lower()
-            self.data["type"] = scan_info["type"]
-            self.data["cfg"] = scan_info["cfg"]
+            self.data[CONF_IP] = scan_info[CONF_IP]
+            self.data[CONF_MAC] = scan_info[CONF_MAC].lower()
+            self.data[CONF_TYPE] = scan_info[CONF_TYPE]
+            self.data[CONF_CFG] = scan_info[CONF_CFG]
 
-            if self.data["type"] not in SUPPORT_DEVICE:
-                return self.async_abort(reason=f"not supported device type: {self.data['type']}")
+            if self.data[CONF_TYPE] not in SUPPORT_DEVICE:
+                return self.async_abort(reason=f"not supported device type: {self.data[CONF_TYPE]}")
 
             self.context.update(
                 {
                     "title_placeholders": {
-                        "type": self.data["type"],
-                        "mac": self.data["mac"],
+                        CONF_TYPE: self.data[CONF_TYPE],
+                        CONF_MAC: self.data[CONF_MAC],
                     }
                 }
             )
@@ -164,23 +167,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input:
             # TODO: may need to confirm user input and check communicate with device.
-            self.data["ip"] = user_input["ip"]
-            self.data["mac"] = user_input["mac"]
-            self.data["type"] = user_input["type"]
-            self.data["cfg"] = user_input["cfg"]
-            self.data["name"] = user_input["name"]
+            self.data[CONF_IP] = user_input[CONF_IP]
+            self.data[CONF_MAC] = user_input[CONF_MAC]
+            self.data[CONF_TYPE] = user_input[CONF_TYPE]
+            self.data[CONF_CFG] = user_input[CONF_CFG]
+            self.data[CONF_NAME] = user_input[CONF_NAME]
             return self.async_create_entry(
-                title=self.data["type"],
+                title=self.data[CONF_TYPE],
                 data=self.data,
             )
 
         DATA_SCHEMA = vol.Schema(
             {
-                vol.Required("ip"): str,
-                vol.Required("mac"): str,
-                vol.Required("type"): vol.In(SUPPORT_DEVICE),
-                vol.Required("cfg"): int,
-                vol.Required("name"): str,
+                vol.Required(CONF_IP): str,
+                vol.Required(CONF_MAC): str,
+                vol.Required(CONF_TYPE): vol.In(SUPPORT_DEVICE),
+                vol.Required(CONF_CFG): int,
+                vol.Required(CONF_NAME): str,
             }
         )
 

@@ -152,7 +152,7 @@ class HcmVirtualThermostat(ClimateEntity):
         self._attr_available = self._proxy._attr_available
         self._room_register_index = HCM_REG_STATE_START + number_of_room
         self._attr_unique_id = uid
-        self._attr_name = f"{name} #{number_of_room}" if name else self._attr_unique_id
+        self._attr_name = f"{name} #{number_of_room + 1}" if name else self._attr_unique_id
 
     def set_hvac_mode(self, hvac_mode: str):
         self._proxy.command(

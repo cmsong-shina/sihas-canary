@@ -79,7 +79,7 @@ class StmSbmVirtualLight(LightEntity):
         self._state = None
         self._number_of_switch = number_of_switch
         self._attr_unique_id = uid
-        self._attr_name = f"{name}-{number_of_switch}" if name else uid
+        self._attr_name = f"{name} #{number_of_switch + 1}" if name else uid
         self._attr_unique_id = uid
 
     @property

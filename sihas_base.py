@@ -2,6 +2,8 @@ import logging
 import socket
 from typing import List, Optional
 
+from config.custom_components.sihas_canary.const import ATTRIBUTION, CONF_MAC, CONF_TYPE
+from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
 
 from .errors import ModbusNotEnabledError
@@ -141,12 +143,15 @@ class SihasEntity(SihasBase, Entity):
         self._attr_name = name if name else self._attr_unique_id
 
         # init empty value
-        self._attributes = {}
         self._state = None
 
     @property
-    def extra_state_attributes(self):
-        return self._attributes
+    def extra_state_attributes(self) -> dict:
+        return {
+            ATTR_ATTRIBUTION: ATTRIBUTION,
+            CONF_MAC: self.mac,
+            CONF_TYPE: self.device_type,
+        }
 
     def update(self):
         raise NotImplementedError(f"update method does not implemented for {self.device_type}")
@@ -209,3 +214,11 @@ class SihasProxy(SihasBase):
     def get_sub_entities(self) -> List[Entity]:
         """Generate sub-instances"""
         raise NotImplementedError()
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return {
+            ATTR_ATTRIBUTION: ATTRIBUTION,
+            CONF_MAC: self.mac,
+            CONF_TYPE: self.device_type,
+        }

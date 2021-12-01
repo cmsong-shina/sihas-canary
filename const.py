@@ -6,6 +6,7 @@ import voluptuous as vol
 from homeassistant.components.climate import PLATFORM_SCHEMA
 
 DOMAIN: Final = "sihas_canary"
+ATTRIBUTION: Final = "SiHAS IoT Device"
 ENDIAN: Final = "big"
 
 DEVICE_TYPE: Final = {

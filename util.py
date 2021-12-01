@@ -66,6 +66,6 @@ def parse_scan_message(msg: str) -> Dict:
     return {
         "type": type,
         "mac": mac,
-        "ip": ip,
+        "ip": IpConv.remove_leading_zero(ip),
         "cfg": config,
     }

@@ -44,7 +44,7 @@ from .const import (
     ICON_HEATER,
     SIHAS_PLATFORM_SCHEMA,
 )
-from .errors import ModbusNotEnabledError
+from .errors import ModbusNotEnabledError, PacketSizeError
 from .packet_builder import packet_builder as pb
 from .sender import send
 from .sihas_base import SihasEntity, SihasProxy
@@ -98,12 +98,15 @@ async def async_setup_entry(
                 ).get_sub_entities()
             )
 
-        except ModbusNotEnabledError:
-            raise ModbusNotEnabledError(entry.data[CONF_IP])
+        except (ModbusNotEnabledError, PacketSizeError) as e:
+            raise e
 
         except Exception as e:
             _LOGGER.error(
-                f"failed to add device <{entry.data[CONF_TYPE]}, {entry.data[CONF_IP]}>, be sure IP is correct and restart HA to load HCM: {e}"
+                "failed to add device <%s, %s>, be sure IP is correct and restart HA to load HCM: %s",
+                entry.data[CONF_TYPE],
+                entry.data[CONF_IP],
+                e,
             )
     return
 

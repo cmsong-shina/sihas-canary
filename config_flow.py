@@ -127,7 +127,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         mac = cast(str, discovery_info.get("macaddress"))
 
         await self.async_set_unique_id(MacConv.insert_colon(mac))
-        self._abort_if_unique_id_configured()
+        self._abort_if_unique_id_configured(updates={CONF_IP: ip})
 
         # SiHAS Scan
         if resp := scan(pb.scan(), ip):

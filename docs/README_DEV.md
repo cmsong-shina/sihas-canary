@@ -15,3 +15,8 @@ To enter develop env:
 $ source /home/maya/workspace/hass/core/venv/bin/activate
 $ hass -c  config
 ```
+
+Create `.env` on root path to intellisence
+```bash
+$ echo 'PYTHONPATH=$PYTHONPATH:../../../' > .env
+```

@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 import logging
+import math
+from abc import abstractmethod
+from dataclasses import dataclass
 from datetime import timedelta
-from typing import Dict, List, cast
+from enum import Enum
+from typing import Dict, List, Optional, cast
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
     CURRENT_HVAC_HEAT,
     CURRENT_HVAC_IDLE,
+    CURRENT_HVAC_OFF,
     FAN_HIGH,
     FAN_LOW,
     FAN_MEDIUM,
@@ -26,6 +31,7 @@ from homeassistant.components.climate.const import (
     SWING_OFF,
     SWING_VERTICAL,
 )
+from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
@@ -108,6 +114,18 @@ async def async_setup_entry(
                 entry.data[CONF_IP],
                 e,
             )
+    elif entry.data[CONF_TYPE] == "BCM":
+        async_add_entities(
+            [
+                Bcm300(
+                    entry.data[CONF_IP],
+                    entry.data[CONF_MAC],
+                    entry.data[CONF_TYPE],
+                    entry.data[CONF_CFG],
+                    entry.data[CONF_NAME],
+                ),
+            ],
+        )
     return
 
 
@@ -304,3 +322,142 @@ class Acm300(SihasEntity, ClimateEntity):
             if self.config == 1:
                 self._attr_current_temperature = regs[Acm300.REG_AC_TEMP] / 10
             self._attr_target_temperature = regs[Acm300.REG_SET_POINT]
+
+
+class OutModeEntity(SelectEntity):
+    OUT_MODE: Final[str] = "OUT"  # 외출
+    OCCUPY_MODE: Final[str] = "OCCUPY"  # 재실
+
+    def __init__(self) -> None:
+        SelectEntity.__init__(self)
+        self._attr_options = [OutModeEntity.OUT_MODE, OutModeEntity.OCCUPY_MODE]
+        self._attr_current_option = None
+
+    @abstractmethod
+    def select_option(self, option: str) -> None:
+        """Change the selected option."""
+
+
+class BcmHeatMode(Enum):
+    Room: Final = 0
+    Ondol: Final = 1
+
+
+@dataclass
+class BcmOpMode:
+    isOnsuOn: bool
+    isHeatOn: bool
+    heatMode: BcmHeatMode
+
+
+# BCM
+BCM_REG_ONOFF: Final = 0  # 보일러 운전상태 ON/OFF
+BCM_REG_ROOMSETPT: Final = 1  # 보일러 실내난방 설정온도(x1)
+BCM_REG_ONDOLSETPT: Final = 2  # 보일러 온돌난방 설정온도(x1)
+BCM_REG_ONSUSETPT: Final = 3  # 보일러 온수전용 설정온도(x1)
+BCM_REG_OPERMODE: Final = 4  # 보일러 운전모드
+BCM_REG_OUTMODE: Final = 5  # 보일러 외출모드(0=재실,1=외출)
+BCM_REG_TIMERMODE: Final = 6  # 보일러 예약모드(0=예약없음,1=예약실행)
+BCM_REG_TIMERTIME: Final = 7  # 보일러 예약시간(예:1210->12시간마다 10분가동)
+BCM_REG_ROOMTEMP: Final = 8  # 보일러 실내온도(x0.1)
+BCM_REG_ONDOLTEMP: Final = 9  # 보일러 온돌온도(x1)
+BCM_REG_ONSUTEMP: Final = 10  # 보일러 온수온도(x1)
+BCM_REG_FIREST: Final = 11  # 보일러 연소상태(0=정지,1=연소)
+BCM_REG_ERRORST: Final = 12  # 보일러 에러상태(0=정상, 그외는 에러)
+BCM_REG_WATERST: Final = 13  # 보일러 물보충상태(0=정상, 1=물보충필요)
+BCM_REG_ONLINEST: Final = 14  # 보일러 통신상태(0=온라인, 1=오프라인)
+
+
+class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
+    _attr_icon = ICON_HEATER
+    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
+    _attr_max_temp: Final = 80
+    _attr_min_temp: Final = 0
+    _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
+    _attr_target_temperature_step: Final = 1
+    _attr_temperature_unit: Final = TEMP_CELSIUS
+
+    def __init__(
+        self,
+        ip: str,
+        mac: str,
+        device_type: str,
+        config: int,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(
+            ip=ip,
+            mac=mac,
+            device_type=device_type,
+            config=config,
+            name=name,
+        )
+
+        self.opmode: Optional[BcmOpMode] = None
+
+    def set_temperature(self, **kwargs):
+        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
+
+        assert self.opmode != None
+        self.command(
+            BCM_REG_ROOMSETPT if (self.opmode.heatMode == BcmHeatMode.Room) else BCM_REG_ONDOLSETPT,
+            math.floor(tmp),
+        )
+
+    def select_option(self, option: str) -> None:
+        self.command(BCM_REG_OUTMODE, 1 if option == self.OUT_MODE else 0)
+
+    def update(self):
+        if regs := self.poll():
+            self.opmode = self._parse_oper_mode(regs)
+            data = self._parse_registers(regs)
+
+            self._attr_havc_mode = self._resolve_hvac_mode(regs)
+
+            setpt: Optional[int] = None  # set point
+            curpt: Optional[int] = None  # current point
+
+            if self.opmode.heatMode == BcmHeatMode.Room:
+                setpt = data[BCM_REG_ROOMSETPT]
+                curpt = data[BCM_REG_ROOMTEMP]
+            else:
+                setpt = data[BCM_REG_ONDOLSETPT]
+                curpt = data[BCM_REG_ONDOLTEMP]
+
+            self._attr_current_temperature = curpt
+            self._attr_target_temperature = setpt
+            self._attr_current_option = (
+                self.OUT_MODE if data[BCM_REG_OUTMODE] == 1 else self.OCCUPY_MODE
+            )
+
+    def _resolve_hvac_mode(self, regs):
+        if regs[BCM_REG_ONOFF] == 0:
+            return CURRENT_HVAC_OFF
+        elif regs[BCM_REG_FIREST] == 0:
+            return CURRENT_HVAC_IDLE
+        else:
+            return CURRENT_HVAC_HEAT
+
+    def _parse_registers(self, reg: List[int]) -> Dict:
+        return {
+            "onoff": reg[BCM_REG_ONOFF],
+            "roomsetpt": reg[BCM_REG_ROOMSETPT],
+            "ondolsetpt": reg[BCM_REG_ONDOLSETPT],
+            "onsusetpt": reg[BCM_REG_ONSUSETPT],
+            "outmode": reg[BCM_REG_OUTMODE],
+        }
+
+    def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
+        """보일러 운전모드 파싱
+        regs[_BCMOPERMODE] = 0b_0000_0000
+                                       \\\_온수 ON/OFF Flag
+                                        \\_난방 ON/OFF Flag
+                                         \_난방 모드 Flag [0=실내, 1=온돌]
+        """
+        reg = regs[BCM_REG_OPERMODE]
+
+        return BcmOpMode(
+            (reg & 1) != 0,
+            (reg & (1 << 1)) != 0,
+            BcmHeatMode.Ondol if (reg & (1 << 2)) != 0 else BcmHeatMode.Room,
+        )

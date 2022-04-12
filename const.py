@@ -36,6 +36,7 @@ DEVICE_TYPE: Final = {
 
 SUPPORT_DEVICE: Final[List[str]] = [
     "ACM",
+    "BCM",
     "AQM",
     "CCM",
     "HCM",

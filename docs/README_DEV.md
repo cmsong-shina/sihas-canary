@@ -16,6 +16,7 @@ $ source /home/maya/workspace/hass/core/venv/bin/activate
 $ hass -c  config
 ```
 
+# 개발환경 설정
 Create `.env` on root path to intellisence
 ```bash
 $ echo 'PYTHONPATH=$PYTHONPATH:../../../' > .env

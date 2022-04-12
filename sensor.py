@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL, SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -153,7 +153,7 @@ class Pmm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: str = None,
+        name: Optional[str] = None,
     ):
         super().__init__(
             ip=ip,
@@ -212,7 +212,7 @@ class Aqm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: str = None,
+        name: Optional[str] = None,
     ):
         super().__init__(
             ip=ip,

@@ -118,7 +118,7 @@ class Hcm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: str = None,
+        name: Optional[str] = None,
     ) -> None:
         super().__init__(
             ip,
@@ -146,7 +146,7 @@ class HcmVirtualThermostat(ClimateEntity):
     _attr_target_temperature_step: Final = 1
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
-    def __init__(self, proxy: Hcm300, number_of_room: int, name: str = None) -> None:
+    def __init__(self, proxy: Hcm300, number_of_room: int, name: Optional[str] = None) -> None:
         super().__init__()
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
 
@@ -255,7 +255,7 @@ class Acm300(SihasEntity, ClimateEntity):
         mac: str,
         device_type: str,
         config: int,
-        name: str = None,
+        name: Optional[str] = None,
     ):
         super().__init__(
             ip=ip,

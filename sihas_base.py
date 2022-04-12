@@ -129,8 +129,8 @@ class SihasEntity(SihasBase, Entity):
         mac: str,
         device_type: str,
         config: int,
-        uid: str = None,
-        name: str = None,
+        uid: Optional[str] = None,
+        name: Optional[str] = None,
     ) -> None:
         super().__init__(
             ip,

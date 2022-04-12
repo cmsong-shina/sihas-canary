@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Optional
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
@@ -67,7 +68,7 @@ class Ccm300(SihasEntity, SwitchEntity):
         mac: str,
         device_type: str,
         config: int,
-        name: str = None,
+        name: Optional[str] = None,
     ):
         super().__init__(
             ip=ip,

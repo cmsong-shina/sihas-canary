@@ -2,7 +2,7 @@
 from __future__ import annotations
 from datetime import timedelta
 
-from typing import List
+from typing import List, Optional
 
 from homeassistant.components.light import LightEntity
 from homeassistant.config_entries import ConfigEntry
@@ -52,7 +52,7 @@ class StmSbm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: str = None,
+        name: Optional[str] = None,
     ):
         super().__init__(
             ip=ip,
@@ -69,7 +69,7 @@ class StmSbm300(SihasProxy):
 class StmSbmVirtualLight(LightEntity):
     _attr_icon = ICON_LIGHT_BULB
 
-    def __init__(self, stbm: StmSbm300, number_of_switch: int, name: str = None):
+    def __init__(self, stbm: StmSbm300, number_of_switch: int, name: Optional[str] = None):
         super().__init__()
 
         uid = f"{stbm.device_type}-{stbm.mac}-{number_of_switch}"

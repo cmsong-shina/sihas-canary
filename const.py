@@ -48,7 +48,9 @@ DEFAULT_TIMEOUT: Final = 0.5
 PORT: Final = 502
 BUF_SIZE: Final = 1024
 
-MAC_OUI = "a82bd6"
+MAC_OUI: Final = "a82bd6"
+
+REG_LENG: Final = 64
 
 # configuration variables
 CONF_NAME: Final = "name"
@@ -83,8 +85,3 @@ SIHAS_PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_CFG): cv.positive_int,
     }
 )
-
-
-ATTR_CURRENT_TEMPERATURE = ""
-ATTR_HVAC_MODE = ""
-ATTR_TARGET_TEMPERATURE = ""

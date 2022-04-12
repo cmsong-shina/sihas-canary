@@ -49,7 +49,7 @@ from .packet_builder import packet_builder as pb
 from .sender import send
 from .sihas_base import SihasEntity, SihasProxy
 
-SCAN_INTERVAL = timedelta(seconds=5)
+SCAN_INTERVAL: Final = timedelta(seconds=5)
 
 HCM_REG_ONOFF: Final = 0
 HCM_REG_SET_TMP: Final = 1
@@ -67,7 +67,7 @@ HCM_MASK_SETTMP: Final = 0b1111_1100_0000_0000
 
 _LOGGER = logging.getLogger(__name__)
 
-PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
+PARALLEL_UPDATES: Final = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA: Final = SIHAS_PLATFORM_SCHEMA
 
 

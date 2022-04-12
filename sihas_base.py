@@ -5,7 +5,7 @@ from typing import List, Optional
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
 
-from .const import ATTRIBUTION, CONF_MAC, CONF_TYPE
+from .const import ATTRIBUTION, CONF_IP, CONF_MAC, CONF_TYPE, REG_LENG
 from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send
@@ -63,6 +63,7 @@ class SihasBase:
             resp = send(req, self.ip, retry=3)
             regs = pb.extract_registers(resp)
             self._attr_available = True
+            assert len(regs) == REG_LENG
             return regs
 
         except ModbusNotEnabledError:
@@ -152,6 +153,7 @@ class SihasEntity(SihasBase, Entity):
             ATTR_ATTRIBUTION: ATTRIBUTION,
             **self._attributes,
             CONF_MAC: self.mac,
+            CONF_IP: self.ip,
             CONF_TYPE: self.device_type,
         }
 

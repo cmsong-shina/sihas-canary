@@ -410,7 +410,6 @@ class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
     def update(self):
         if regs := self.poll():
             self.opmode = self._parse_oper_mode(regs)
-            data = self._parse_registers(regs)
 
             self._attr_havc_mode = self._resolve_hvac_mode(regs)
 
@@ -418,16 +417,16 @@ class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
             curpt: Optional[int] = None  # current point
 
             if self.opmode.heatMode == BcmHeatMode.Room:
-                setpt = data[BCM_REG_ROOMSETPT]
-                curpt = data[BCM_REG_ROOMTEMP]
+                setpt = regs[BCM_REG_ROOMSETPT]
+                curpt = regs[BCM_REG_ROOMTEMP]
             else:
-                setpt = data[BCM_REG_ONDOLSETPT]
-                curpt = data[BCM_REG_ONDOLTEMP]
+                setpt = regs[BCM_REG_ONDOLSETPT]
+                curpt = regs[BCM_REG_ONDOLTEMP]
 
             self._attr_current_temperature = curpt
             self._attr_target_temperature = setpt
             self._attr_current_option = (
-                self.OUT_MODE if data[BCM_REG_OUTMODE] == 1 else self.OCCUPY_MODE
+                self.OUT_MODE if regs[BCM_REG_OUTMODE] == 1 else self.OCCUPY_MODE
             )
 
     def _resolve_hvac_mode(self, regs):
@@ -437,15 +436,6 @@ class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
             return CURRENT_HVAC_IDLE
         else:
             return CURRENT_HVAC_HEAT
-
-    def _parse_registers(self, reg: List[int]) -> Dict:
-        return {
-            "onoff": reg[BCM_REG_ONOFF],
-            "roomsetpt": reg[BCM_REG_ROOMSETPT],
-            "ondolsetpt": reg[BCM_REG_ONDOLSETPT],
-            "onsusetpt": reg[BCM_REG_ONSUSETPT],
-            "outmode": reg[BCM_REG_OUTMODE],
-        }
 
     def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
         """보일러 운전모드 파싱

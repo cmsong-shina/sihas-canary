@@ -162,10 +162,10 @@ class HcmVirtualThermostat(ClimateEntity):
     _attr_icon = ICON_HEATER
 
     _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
-    _attr_max_temp: Final = 65
+    _attr_max_temp = 65
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
-    _attr_target_temperature_step: Final = 1
+    _attr_target_temperature_step = 0.5
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
     def __init__(self, proxy: Hcm300, number_of_room: int, name: Optional[str] = None) -> None:
@@ -196,6 +196,10 @@ class HcmVirtualThermostat(ClimateEntity):
         self._proxy.update()
         self._attr_available = self._proxy._attr_available
         self._register_cache = self._proxy.registers[self._room_register_index]
+
+        # 최대 온도/온도 단위 가변 설정
+        self._attr_max_temp = 65 if self.temperature_magnification == 0 else (65 / 2)
+        self._attr_target_temperature_step = self.temperature_magnification
 
         summary = self.parse_room_summary(self._register_cache)
         self._attr_hvac_mode = summary.hvac_mode

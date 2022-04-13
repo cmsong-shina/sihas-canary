@@ -66,6 +66,7 @@ HCM_REG_CUR_TMP: Final = 4
 HCM_REG_CUR_VALVE: Final = 5
 HCM_REG_NUMBER_OF_ROOMS: Final = 18
 HCM_REG_STATE_START: Final = 52
+HCM_REG_ROOM_TEMP_UNIT: Final = 59
 
 # HCM room register mask
 HCM_MASK_ONOFF: Final = 0b_0000_0000_0000_0001
@@ -202,14 +203,19 @@ class HcmVirtualThermostat(ClimateEntity):
         self._attr_target_temperature = data["target_temperature"]
         self._attr_hvac_action = data["hvac_action"]
 
+    @property
+    def temperature_magnification(self) -> float:
+        """room summary의 온도 배율을 반환"""
+        return 0.5 if self._proxy.registers[HCM_REG_ROOM_TEMP_UNIT] != 0 else 1
+
     def parse_register(self, reg: int) -> Dict:
         return {
-            "current_temperature": (reg & HCM_MASK_CURTMP) >> 4,
+            "current_temperature": ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
             "hvac_action": CURRENT_HVAC_IDLE
             if (((reg & HCM_MASK_VALVE) >> 3) == 0)
             else CURRENT_HVAC_HEAT,
             "hvac_mode": HVAC_MODE_HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVAC_MODE_OFF,
-            "target_temperature": (reg & HCM_MASK_SETTMP) >> 10,
+            "target_temperature": ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
         }
 
     def _apply_hvac_mode_on_cache(self, onoff: str) -> int:
@@ -217,6 +223,7 @@ class HcmVirtualThermostat(ClimateEntity):
         return (self._register_cache & ~HCM_MASK_ONOFF) | mask
 
     def _apply_target_temperature_on_cache(self, t: float) -> int:
+        t = t / self.temperature_magnification
         mask = int(t)
         return (self._register_cache & ~HCM_MASK_SETTMP) | (mask << 10)
 

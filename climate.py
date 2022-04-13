@@ -9,8 +9,10 @@ from datetime import timedelta
 from enum import Enum
 from typing import Dict, List, Optional, cast
 
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
+    CURRENT_HVAC_FAN,
     CURRENT_HVAC_HEAT,
     CURRENT_HVAC_IDLE,
     CURRENT_HVAC_OFF,
@@ -21,6 +23,7 @@ from homeassistant.components.climate.const import (
     HVAC_MODE_COOL,
     HVAC_MODE_DRY,
     HVAC_MODE_FAN_ONLY,
+    HVAC_MODE_AUTO,
     HVAC_MODE_HEAT,
     HVAC_MODE_OFF,
     SUPPORT_FAN_MODE,
@@ -362,15 +365,15 @@ BCM_REG_TIMERTIME: Final = 7  # 보일러 예약시간(예:1210->12시간마다 
 BCM_REG_ROOMTEMP: Final = 8  # 보일러 실내온도(x0.1)
 BCM_REG_ONDOLTEMP: Final = 9  # 보일러 온돌온도(x1)
 BCM_REG_ONSUTEMP: Final = 10  # 보일러 온수온도(x1)
-BCM_REG_FIREST: Final = 11  # 보일러 연소상태(0=정지,1=연소)
+BCM_REG_FIRE_STATE: Final = 11  # 보일러 연소상태(0=정지,1=연소)
 BCM_REG_ERRORST: Final = 12  # 보일러 에러상태(0=정상, 그외는 에러)
 BCM_REG_WATERST: Final = 13  # 보일러 물보충상태(0=정상, 1=물보충필요)
 BCM_REG_ONLINEST: Final = 14  # 보일러 통신상태(0=온라인, 1=오프라인)
 
 
-class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
+class Bcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
-    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
+    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_AUTO]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
@@ -395,6 +398,21 @@ class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
 
         self.opmode: Optional[BcmOpMode] = None
 
+    def set_hvac_mode(self, hvac_mode: str):
+        if hvac_mode == HVAC_MODE_FAN_ONLY:
+            self.command(BCM_REG_OUTMODE, 1)
+            self.command(BCM_REG_ONOFF, 1)
+        elif hvac_mode == HVAC_MODE_HEAT:
+            self.command(BCM_REG_OUTMODE, 0)
+            self.command(BCM_REG_ONOFF, 1)
+            self.command(BCM_REG_TIMERMODE, 1)
+        elif hvac_mode == HVAC_MODE_AUTO:
+            self.command(BCM_REG_OUTMODE, 0)
+            self.command(BCM_REG_ONOFF, 1)
+            self.command(BCM_REG_TIMERMODE, 0)
+        elif hvac_mode == HVAC_MODE_OFF:
+            self.command(BCM_REG_ONOFF, 0)
+
     def set_temperature(self, **kwargs):
         tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
 
@@ -404,35 +422,42 @@ class Bcm300(SihasEntity, ClimateEntity, OutModeEntity):
             math.floor(tmp),
         )
 
-    def select_option(self, option: str) -> None:
-        self.command(BCM_REG_OUTMODE, 1 if option == self.OUT_MODE else 0)
-
     def update(self):
         if regs := self.poll():
             self.opmode = self._parse_oper_mode(regs)
 
-            self._attr_havc_mode = self._resolve_hvac_mode(regs)
+            self._attr_hvac_mode = self._resolve_hvac_mode(regs)
+            self._attr_hvac_action = self._resolve_hvac_action(regs)
 
             setpt: Optional[int] = None  # set point
             curpt: Optional[int] = None  # current point
 
             if self.opmode.heatMode == BcmHeatMode.Room:
                 setpt = regs[BCM_REG_ROOMSETPT]
-                curpt = regs[BCM_REG_ROOMTEMP]
+                curpt = math.floor(regs[BCM_REG_ROOMTEMP] / 10)
             else:
                 setpt = regs[BCM_REG_ONDOLSETPT]
                 curpt = regs[BCM_REG_ONDOLTEMP]
 
             self._attr_current_temperature = curpt
             self._attr_target_temperature = setpt
-            self._attr_current_option = (
-                self.OUT_MODE if regs[BCM_REG_OUTMODE] == 1 else self.OCCUPY_MODE
-            )
 
     def _resolve_hvac_mode(self, regs):
         if regs[BCM_REG_ONOFF] == 0:
+            return HVAC_MODE_OFF
+        elif regs[BCM_REG_TIMERMODE] == 1:
+            return HVAC_MODE_HEAT
+        elif regs[BCM_REG_OUTMODE] == 1:
+            return HVAC_MODE_FAN_ONLY
+        else:
+            return HVAC_MODE_AUTO
+
+    def _resolve_hvac_action(self, regs):
+        if regs[BCM_REG_ONOFF] == 0:
             return CURRENT_HVAC_OFF
-        elif regs[BCM_REG_FIREST] == 0:
+        # elif regs[BCM_REG_OUTMODE] == 1:
+        #     return CURRENT_HVAC_FAN
+        elif regs[BCM_REG_FIRE_STATE] == 0:
             return CURRENT_HVAC_IDLE
         else:
             return CURRENT_HVAC_HEAT

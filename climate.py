@@ -197,26 +197,24 @@ class HcmVirtualThermostat(ClimateEntity):
         self._attr_available = self._proxy._attr_available
         self._register_cache = self._proxy.registers[self._room_register_index]
 
-        data = self.parse_register(self._register_cache)
-        self._attr_hvac_mode = data["hvac_mode"]
-        self._attr_current_temperature = data["current_temperature"]
-        self._attr_target_temperature = data["target_temperature"]
-        self._attr_hvac_action = data["hvac_action"]
+        summary = self.parse_room_summary(self._register_cache)
+        self._attr_hvac_mode = summary.hvac_mode
+        self._attr_current_temperature = summary.current_temperature
+        self._attr_target_temperature = summary.target_temperature
+        self._attr_hvac_action = summary.hvac_action
 
     @property
     def temperature_magnification(self) -> float:
         """room summary의 온도 배율을 반환"""
         return 0.5 if self._proxy.registers[HCM_REG_ROOM_TEMP_UNIT] != 0 else 1
 
-    def parse_register(self, reg: int) -> Dict:
-        return {
-            "current_temperature": ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
-            "hvac_action": CURRENT_HVAC_IDLE
-            if (((reg & HCM_MASK_VALVE) >> 3) == 0)
-            else CURRENT_HVAC_HEAT,
-            "hvac_mode": HVAC_MODE_HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVAC_MODE_OFF,
-            "target_temperature": ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
-        }
+    def parse_room_summary(self, reg: int) -> RoomSummaryData:
+        return RoomSummaryData(
+            ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
+            CURRENT_HVAC_IDLE if (((reg & HCM_MASK_VALVE) >> 3) == 0) else CURRENT_HVAC_HEAT,
+            HVAC_MODE_HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVAC_MODE_OFF,
+            ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
+        )
 
     def _apply_hvac_mode_on_cache(self, onoff: str) -> int:
         mask = 1 if onoff == HVAC_MODE_HEAT else 0
@@ -226,6 +224,14 @@ class HcmVirtualThermostat(ClimateEntity):
         t = t / self.temperature_magnification
         mask = int(t)
         return (self._register_cache & ~HCM_MASK_SETTMP) | (mask << 10)
+
+
+@dataclass
+class RoomSummaryData:
+    current_temperature: float
+    hvac_action: str
+    hvac_mode: str
+    target_temperature: float
 
 
 class Acm300(SihasEntity, ClimateEntity):

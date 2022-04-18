@@ -241,7 +241,7 @@ class AqmVirtualSensor(SensorEntity):
         self._proxy = proxy
         self._attr_available = self._proxy._attr_available
         self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['device_class']}"
-        self._attr_unit_of_measurement = conf["uom"]
+        self._attr_native_unit_of_measurement = conf["uom"]
         self._attr_name = f"{proxy.name} #{conf['sub_id']}" if proxy.name else self._attr_unique_id
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]

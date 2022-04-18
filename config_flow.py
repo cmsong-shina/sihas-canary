@@ -9,10 +9,9 @@ from typing import Any, Dict, List, cast
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.components import zeroconf
+from homeassistant.components import dhcp, zeroconf
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.typing import DiscoveryInfoType
 
 from .const import (
     CONF_CFG,
@@ -44,7 +43,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.sihas: SihasBase
         self.data: Dict[str, Any] = {}
 
-    async def async_step_zeroconf(self, discovery_info: DiscoveryInfoType) -> FlowResult:
+    async def async_step_zeroconf(self, discovery_info: zeroconf.ZeroconfServiceInfo) -> FlowResult:
         _LOGGER.debug("device found by zeroconf: %s", discovery_info)
 
         # {
@@ -58,18 +57,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # }
 
         # ['sihas', 'acm', '0a2998']
-        hostname_parts: List[str] = discovery_info[CONF_HOSTNAME].split(".")[0].split("_")
+        hostname_parts: List[str] = discovery_info.hostname.split(".")[0].split("_")
 
-        self.data[CONF_IP] = discovery_info[CONF_HOST]
+        self.data[CONF_IP] = discovery_info.host
         self.data[CONF_MAC] = MacConv.insert_colon(MAC_OUI + hostname_parts[2]).lower()
         self.data[CONF_TYPE] = hostname_parts[1].upper()
-        self.data[CONF_CFG] = int(discovery_info[CONF_PROP][CONF_CFG], 16)
+        self.data[CONF_CFG] = int(discovery_info.properties[CONF_CFG], 16)
 
         if self.data[CONF_TYPE] not in SUPPORT_DEVICE:
             return self.async_abort(reason=f"not supported device type: {self.data[CONF_TYPE]}")
 
         await self.async_set_unique_id(self.data[CONF_MAC])
-        self._abort_if_unique_id_configured(updates={CONF_IP: discovery_info[CONF_HOST]})
+        self._abort_if_unique_id_configured(updates={CONF_IP: discovery_info.host})
 
         # display device on integrations page to advertise to user
         self.context.update(
@@ -115,16 +114,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     #   DHCP discovery assumed does not work in develop environment(via VSC debugpy).
     #   On release enviornment(such as rpi HAOS), works well.
     #   It may associated about permission(which scapy or aiodiscover use), IMO.
-    async def async_step_dhcp(self, discovery_info: DiscoveryInfoType):
+    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo):
         # data will come like
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
         _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
 
         # wait for device
-        time.sleep(10)
+        await asyncio.sleep(10)
 
-        ip = cast(str, discovery_info.get(CONF_IP))
-        mac = cast(str, discovery_info.get("macaddress"))
+        ip = cast(str, discovery_info.ip)
+        mac = cast(str, discovery_info.macaddress)
 
         await self.async_set_unique_id(MacConv.insert_colon(mac))
         self._abort_if_unique_id_configured(updates={CONF_IP: ip})

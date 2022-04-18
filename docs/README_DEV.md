@@ -33,3 +33,21 @@ Create `.env` on root path to intellisence
 ```bash
 $ echo 'PYTHONPATH=$PYTHONPATH:../../../' > .env
 ```
+
+VSCODE에서 실행시 DHCP Sniffing 권한을 위해서 `launch.json`을 수정한다.
+```diff
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Home Assistant",
+      "type": "python",
+      "request": "launch",
+      "module": "homeassistant",
+      "justMyCode": false,
+      "args": ["--debug", "-c", "config"],
++     "sudo": true
+    },
+    ...
+}
+```

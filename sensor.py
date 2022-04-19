@@ -1,10 +1,15 @@
 from __future__ import annotations
+from dataclasses import dataclass
 
-import logging
 from datetime import timedelta
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Literal, Optional
 
-from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL, SensorEntity
+from homeassistant.components.sensor import (
+    STATE_CLASS_MEASUREMENT,
+    STATE_CLASS_TOTAL,
+    STATE_CLASS_TOTAL_INCREASING,
+    SensorEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
@@ -20,6 +25,7 @@ from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
     ENERGY_KILO_WATT_HOUR,
+    ENERGY_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
     POWER_WATT,
@@ -28,7 +34,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing_extensions import Final
 
 from .const import (
@@ -40,7 +45,8 @@ from .const import (
     ICON_POWER_METER,
     SIHAS_PLATFORM_SCHEMA,
 )
-from .sihas_base import SihasEntity, SihasProxy
+from .sihas_base import SihasProxy
+from .util import register_put_u32
 
 SCAN_INTERVAL = timedelta(seconds=5)
 
@@ -99,28 +105,50 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
     },
 }
 
+PMM_KEY_POWER: Final = "power"
+PMM_KEY_THIS_MONTH_ENERGY: Final = "this_month_energy"
+PMM_KEY_THIS_DAY_ENERGY: Final = "this_day_energy"
+PMM_KEY_TOTAL: Final = "total"
+
+
+@dataclass
+class PmmConfig:
+    nuom: str
+    value_handler: Callable
+    device_class: str
+    state_class: str
+    sub_id: str
+
+
 PMM_GENERIC_SENSOR_DEFINE: Final = {
-    "cur_energy": {
-        "nuom": POWER_WATT,
-        "value_handler": lambda r: r[2],
-        "device_class": DEVICE_CLASS_POWER,
-        "state_class": STATE_CLASS_MEASUREMENT,
-        "sub_id": "power",
-    },
-    "this_month_energy": {
-        "nuom": ENERGY_KILO_WATT_HOUR,
-        "value_handler": lambda r: r[10] / 100,
-        "device_class": DEVICE_CLASS_ENERGY,
-        "state_class": STATE_CLASS_TOTAL,
-        "sub_id": "this_month_energy",
-    },
-    "this_day_energy": {
-        "nuom": ENERGY_KILO_WATT_HOUR,
-        "value_handler": lambda r: r[8] / 100,
-        "device_class": DEVICE_CLASS_ENERGY,
-        "state_class": STATE_CLASS_TOTAL,
-        "sub_id": "this_day_energy",
-    },
+    PMM_KEY_POWER: PmmConfig(
+        nuom=POWER_WATT,
+        value_handler=lambda r: r[2],
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        sub_id=PMM_KEY_POWER,
+    ),
+    PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
+        nuom=ENERGY_KILO_WATT_HOUR,
+        value_handler=lambda r: r[10] / 100,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL,
+        sub_id=PMM_KEY_THIS_MONTH_ENERGY,
+    ),
+    PMM_KEY_THIS_DAY_ENERGY: PmmConfig(
+        nuom=ENERGY_KILO_WATT_HOUR,
+        value_handler=lambda r: r[8] / 100,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL,
+        sub_id=PMM_KEY_THIS_DAY_ENERGY,
+    ),
+    PMM_KEY_TOTAL: PmmConfig(
+        nuom=ENERGY_WATT_HOUR,
+        value_handler=lambda r: register_put_u32(r[40], r[41]),
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        sub_id=PMM_KEY_TOTAL,
+    ),
 }
 
 
@@ -165,26 +193,27 @@ class Pmm300(SihasProxy):
 
     def get_sub_entities(self) -> List[Entity]:
         return [
-            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["cur_energy"]),
-            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["this_month_energy"]),
-            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE["this_day_energy"]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_POWER]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_MONTH_ENERGY]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_DAY_ENERGY]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_TOTAL]),
         ]
 
 
 class PmmVirtualSensor(SensorEntity):
     _attr_icon = ICON_POWER_METER
 
-    def __init__(self, proxy: Pmm300, conf: Dict) -> None:
+    def __init__(self, proxy: Pmm300, conf: PmmConfig) -> None:
         super().__init__()
         self._proxy = proxy
         self._attr_available = self._proxy._attr_available
-        self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['sub_id']}"
-        self._attr_native_unit_of_measurement = conf["nuom"]
-        self._attr_name = f"{proxy.name} #{conf['sub_id']}" if proxy.name else self._attr_unique_id
-        self._attr_device_class = conf["device_class"]
-        self._attr_state_class = conf["state_class"]
+        self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf.sub_id}"
+        self._attr_native_unit_of_measurement = conf.nuom
+        self._attr_name = f"{proxy.name} #{conf.sub_id}" if proxy.name else self._attr_unique_id
+        self._attr_device_class = conf.device_class
+        self._attr_state_class = conf.state_class
 
-        self.value_handler: Callable = conf["value_handler"]
+        self.value_handler: Callable = conf.value_handler
 
     def update(self):
         self._proxy.update()

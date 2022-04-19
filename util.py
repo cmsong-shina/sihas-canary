@@ -69,3 +69,7 @@ def parse_scan_message(msg: str) -> Dict:
         "ip": IpConv.remove_leading_zero(ip),
         "cfg": config,
     }
+
+
+def register_put_u32(b1: int, b2: int) -> int:
+    return b1 | (b2 << 16)

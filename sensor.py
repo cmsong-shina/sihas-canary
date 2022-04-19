@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from datetime import timedelta
-from typing import Callable, Dict, List, Literal, Optional
+from typing import Callable, Dict, List, Optional
 
 from homeassistant.components.sensor import (
     STATE_CLASS_MEASUREMENT,
@@ -24,7 +24,6 @@ from homeassistant.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
-    ENERGY_KILO_WATT_HOUR,
     ENERGY_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
@@ -129,15 +128,15 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         sub_id=PMM_KEY_POWER,
     ),
     PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
-        nuom=ENERGY_KILO_WATT_HOUR,
-        value_handler=lambda r: r[10] / 100,
+        nuom=ENERGY_WATT_HOUR,
+        value_handler=lambda r: r[10] * 10,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_MONTH_ENERGY,
     ),
     PMM_KEY_THIS_DAY_ENERGY: PmmConfig(
-        nuom=ENERGY_KILO_WATT_HOUR,
-        value_handler=lambda r: r[8] / 100,
+        nuom=ENERGY_WATT_HOUR,
+        value_handler=lambda r: r[8] * 10,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_DAY_ENERGY,

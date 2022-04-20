@@ -1,6 +1,7 @@
 import logging
 import socket
-from typing import List, Optional
+from typing import Dict, List, Optional, TypedDict
+from typing_extensions import NotRequired
 
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
@@ -12,6 +13,10 @@ from .sender import send
 from .util import Debouncer
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class CommandOption(TypedDict):
+    retry: NotRequired[int]
 
 
 class SihasBase:
@@ -86,10 +91,16 @@ class SihasBase:
             _LOGGER.info(f"device set to not available <{self.device_type, self.ip}>")
         return None
 
-    def command(self, idx, val) -> bool:
+    def command(self, idx: int, val: int, opt: CommandOption = {}) -> bool:
+        default_opt: CommandOption = {
+            "retry": 3,
+        }
+
+        opt = default_opt | opt
+
         try:
             req = pb.command(idx, val)
-            if send(req, self.ip, retry=3):
+            if send(req, self.ip, retry=opt["retry"]):
                 self._attr_available = True
                 return True
 

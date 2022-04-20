@@ -73,6 +73,7 @@ ICON_HEATER: Final = "mdi:thermostat"
 ICON_LIGHT_BULB: Final = "mdi:lightbulb-variant"
 ICON_POWER_METER: Final = "mdi:transmission-tower"
 ICON_POWER_SOCKET: Final = "mdi:power-socket-de"
+ICON_BUTTON: Final = "mdi:radiobox-marked"
 
 DEFAULT_DEBOUNCE_DURATION: Final = 3
 DEFAULT_PARALLEL_UPDATES: Final = 5

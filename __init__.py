@@ -15,6 +15,7 @@ PLATFORMS: list[str] = [
     "light",
     "sensor",
     "switch",
+    "button",
 ]
 
 

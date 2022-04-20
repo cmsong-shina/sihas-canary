@@ -9,7 +9,6 @@ from datetime import timedelta
 from enum import Enum
 from typing import Dict, List, Optional, cast
 
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
     CURRENT_HVAC_FAN,
@@ -270,7 +269,9 @@ class Acm300(SihasEntity, ClimateEntity):
     REG_MODE: Final = 2
     REG_FAN: Final = 3
     REG_SWING: Final = 4
+    REG_EXEC_UCR: Final = 5
     REG_AC_TEMP: Final = 6
+    REG_LIST_UCR: Final = 9
 
     HVAC_MODE_TABLE: Final = [
         HVAC_MODE_COOL,

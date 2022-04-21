@@ -60,7 +60,7 @@ async def get_ucr(acm) -> List[AcmUCR]:
         )
 
         acm.registers = pb.extract_registers(resp)
-        ucr_reg = acm.registers[Acm300.REG_LIST_UCR]
+        ucr_reg = acm.registers[Acm300.REG_LIST_UCR1] + (acm.registers[Acm300.REG_LIST_UCR2] << 16)
         urcs = []
         for i in range(0, 20):
             if ucr_reg & (1 << i) != 0:
@@ -78,6 +78,7 @@ class AcmUCR(ButtonEntity):
         self.acm = acm
         self.number_of_button = number_of_button
         self._attr_name = f"리모컨 #{number_of_button + 1}"
+        self._attr_unique_id = f"{acm.device_type}-{acm.mac}-{number_of_button}"
 
     def press(self) -> None:
         self.acm.command(Acm300.REG_EXEC_UCR, self.number_of_button)

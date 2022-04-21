@@ -271,7 +271,8 @@ class Acm300(SihasEntity, ClimateEntity):
     REG_SWING: Final = 4
     REG_EXEC_UCR: Final = 5
     REG_AC_TEMP: Final = 6
-    REG_LIST_UCR: Final = 9
+    REG_LIST_UCR1: Final = 54
+    REG_LIST_UCR2: Final = 55
 
     HVAC_MODE_TABLE: Final = [
         HVAC_MODE_COOL,

@@ -51,3 +51,34 @@ VSCODE에서 실행시 DHCP Sniffing 권한을 위해서 `launch.json`을 수정
     ...
 }
 ```
+
+# 신규 장치 추가 시
+신규 플랫폼일 경우 `__init__.py`에 플랫폼을 추가한다.
+
+```diff
+PLATFORMS: list[str] = [
+    "button",
+    "climate",
++   "cover",
+    "light",
+    "sensor",
+    "switch",
+]
+```
+
+
+신규 장치일 경우 `const.py`에 장치 타입을 추가한다.
+
+```diff
+SUPPORT_DEVICE: Final[List[str]] = [
+    "ACM",
+    "AQM",
+    "BCM",
+    "CCM",
+    "HCM",
+    "PMM",
++   "RBM",
+    "SBM",
+    "STM",
+]
+```

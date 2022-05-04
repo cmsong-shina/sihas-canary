@@ -2,31 +2,22 @@
 from __future__ import annotations
 
 import logging
-import math
-from abc import abstractmethod
-from dataclasses import dataclass
 from datetime import timedelta
-from enum import Enum
-from typing import Dict, List, Optional, cast
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
     SUPPORT_CLOSE,
-    SUPPORT_CLOSE_TILT,
     SUPPORT_OPEN,
-    SUPPORT_OPEN_TILT,
     SUPPORT_SET_POSITION,
-    SUPPORT_SET_TILT_POSITION,
     SUPPORT_STOP,
-    SUPPORT_STOP_TILT,
     CoverEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from typing_extensions import Final
+
+from .sihas_base import SihasEntity
 
 from .const import (
     CONF_CFG,
@@ -38,27 +29,8 @@ from .const import (
     ICON_CURTAIN,
     SIHAS_PLATFORM_SCHEMA,
 )
-from .errors import ModbusNotEnabledError, PacketSizeError
-from .packet_builder import packet_builder as pb
-from .sender import send
-from .sihas_base import SihasEntity, SihasProxy
 
 SCAN_INTERVAL: Final = timedelta(seconds=5)
-
-HCM_REG_ONOFF: Final = 0
-HCM_REG_SET_TMP: Final = 1
-HCM_REG_CUR_TMP: Final = 4
-HCM_REG_CUR_VALVE: Final = 5
-HCM_REG_NUMBER_OF_ROOMS: Final = 18
-HCM_REG_STATE_START: Final = 52
-HCM_REG_ROOM_TEMP_UNIT: Final = 59
-
-# HCM room register mask
-HCM_MASK_ONOFF: Final = 0b_0000_0000_0000_0001
-HCM_MASK_OPMOD: Final = 0b_0000_0000_0000_0110
-HCM_MASK_VALVE: Final = 0b_0000_0000_0000_1000
-HCM_MASK_CURTMP: Final = 0b0000_0011_1111_0000
-HCM_MASK_SETTMP: Final = 0b1111_1100_0000_0000
 
 _LOGGER = logging.getLogger(__name__)
 

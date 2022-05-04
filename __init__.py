@@ -11,11 +11,12 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[str] = [
+    "button",
     "climate",
+    "cover",
     "light",
     "sensor",
     "switch",
-    "button",
 ]
 
 

@@ -107,7 +107,7 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
 PMM_KEY_POWER: Final = "power"
 PMM_KEY_THIS_MONTH_ENERGY: Final = "this_month_energy"
 PMM_KEY_THIS_DAY_ENERGY: Final = "this_day_energy"
-PMM_KEY_TOTAL: Final = "total"
+PMM_KEY_TOTAL: Final = "total_energy"
 
 
 @dataclass

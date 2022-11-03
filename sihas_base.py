@@ -51,6 +51,16 @@ class SihasBase:
         self.config = config
 
         self._attr_available = False
+        self._attr_should_poll = False
+
+    async def async_added_to_hass(self):
+        """Subscribe to device events."""
+        # TODO: advertise
+        pass
+
+    async def async_will_remove_from_hass(self):
+        """Disconnect device object when removed."""
+        pass
 
     def poll(self) -> Optional[List[int]]:
         """Read Holding Registers and return registers.
@@ -97,6 +107,7 @@ class SihasBase:
         }
 
         opt = default_opt | opt
+        # opt.update(default_opt) # would it better?
 
         try:
             req = pb.command(idx, val)

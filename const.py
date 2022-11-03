@@ -1,5 +1,5 @@
 """Constants for the sihas_canary integration."""
-from typing import Final, List, final
+from typing import Final, List, Optional
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -33,6 +33,17 @@ DEVICE_TYPE: Final = {
     "HGW": 20,
     "SBM": 21,
 }
+
+DEVICE_TYPE_INT: Final = {v: k for k, v in DEVICE_TYPE.items()}
+
+
+def device_type_from_enum(i: int) -> str:
+    """
+    Throws:
+        KeyError
+    """
+    return DEVICE_TYPE_INT[i]
+
 
 SUPPORT_DEVICE: Final[List[str]] = [
     "ACM",

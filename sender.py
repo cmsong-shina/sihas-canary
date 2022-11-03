@@ -47,3 +47,7 @@ def scan(data: bytes, ip: str, retry: int = 10) -> typing.Optional[str]:
             break
     _LOGGER.warn(f"failed to scan device: timeout")
     return None
+
+
+def advertise(ip: str):
+    pass

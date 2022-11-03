@@ -1,4 +1,4 @@
-Just to memo for me :D
+Just memo for me :D
 
 
 #### To bump version
@@ -16,7 +16,8 @@ $ source /home/maya/workspace/hass/core/venv/bin/activate
 $ hass -c  config
 ```
 
-> INFO  
+> INFO
+>
 > Follow below command when host does not have compatible version of python. (Debian)
 > ```bash
 > $ sudo update-alternatives --install /usr/bin/python3 python3 <binary: path> <int: priority>
@@ -81,4 +82,10 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "SBM",
     "STM",
 ]
+```
+
+# Clean
+대규모 변경 사항이 있을 경우 기존 장치와 데이터를 삭제하고 다시 실행한다.
+
+```bash
 ```

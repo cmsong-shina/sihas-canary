@@ -44,6 +44,7 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "RBM",
     "SBM",
     "STM",
+    "TCM",
 ]
 
 DEFAULT_TIMEOUT: Final = 0.5

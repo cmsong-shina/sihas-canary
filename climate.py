@@ -6,7 +6,7 @@ import math
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Dict, List, Optional, cast
 
 from homeassistant.components.climate import ClimateEntity
@@ -121,6 +121,18 @@ async def async_setup_entry(
         async_add_entities(
             [
                 Bcm300(
+                    entry.data[CONF_IP],
+                    entry.data[CONF_MAC],
+                    entry.data[CONF_TYPE],
+                    entry.data[CONF_CFG],
+                    entry.data[CONF_NAME],
+                ),
+            ],
+        )
+    elif entry.data[CONF_TYPE] == "TCM":
+        async_add_entities(
+            [
+                Tcm300(
                     entry.data[CONF_IP],
                     entry.data[CONF_MAC],
                     entry.data[CONF_TYPE],
@@ -495,3 +507,95 @@ class Bcm300(SihasEntity, ClimateEntity):
             (reg & (1 << 1)) != 0,
             BcmHeatMode.Ondol if (reg & (1 << 2)) != 0 else BcmHeatMode.Room,
         )
+
+
+# Register index
+class TcmRegister(IntEnum):
+    POWER = 0
+    DESIRED_TEMPERATURE = 1
+    OUT_MODE = 2
+    CURRENT_TEMPERATURE = 3
+    VALVE = 4
+    ALARM = 5
+    FAN_POWER = 6
+    RUN_MODE = 7
+    LOCK = 8
+
+
+# Out mode
+class TcmOutMode(IntEnum):
+    IN_DOOR = 0
+    OUT_DOOR = 1
+
+
+# Run mode
+class TcmRunMode(IntEnum):
+    HEATING = 0
+    COOLING = 1
+
+    def to_hvac_mode(self):
+        return HVAC_MODE_HEAT if self is TcmRunMode.HEATING else HVAC_MODE_COOL
+
+    @staticmethod
+    def from_hvac_mode(hvac_mode):
+        return TcmRunMode.HEATING if hvac_mode == HVAC_MODE_HEAT else TcmRunMode.COOLING
+
+
+# Fan power
+class TcmFanPower(IntEnum):
+    AUTO = 0
+    LOW = 1
+    MIDDLE = 2
+    HIGH = 3
+
+
+class Tcm300(SihasEntity, ClimateEntity):
+    _attr_icon = ICON_HEATER
+    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_COOL]
+    _attr_max_temp: Final = 80
+    _attr_min_temp: Final = 0
+    _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
+    _attr_target_temperature_step: Final = 1
+    _attr_temperature_unit: Final = TEMP_CELSIUS
+
+    def __init__(
+        self,
+        ip: str,
+        mac: str,
+        device_type: str,
+        config: int,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(
+            ip=ip,
+            mac=mac,
+            device_type=device_type,
+            config=config,
+            name=name,
+        )
+
+    def set_hvac_mode(self, hvac_mode: str):
+        if hvac_mode == HVAC_MODE_OFF:
+            self.command(TcmRegister.POWER, 0)
+        else:
+            self.command(TcmRegister.POWER, 1)
+            self.command(TcmRegister.RUN_MODE, TcmRunMode.from_hvac_mode(str))
+
+    def set_temperature(self, **kwargs):
+        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
+        self.command(TcmRegister.DESIRED_TEMPERATURE, int(tmp))
+
+    def update(self):
+        if regs := self.poll():
+            is_off = regs[TcmRegister.POWER] == 0
+            cur_tmp = regs[TcmRegister.CURRENT_TEMPERATURE]
+            set_tmp = regs[TcmRegister.DESIRED_TEMPERATURE]
+            run_mode = TcmRunMode(regs[TcmRegister.RUN_MODE])
+
+            ## reserved
+            # out_mode = TcmOutMode(regs[TcmRegister.OUT_MODE])
+            # fan_power = TcmFanPower(regs[TcmRegister.FAN_POWER])
+
+            self._attr_hvac_mode = HVAC_MODE_OFF if is_off else run_mode.to_hvac_mode()
+            self._attr_current_temperature = cur_tmp
+            self._attr_target_temperature = set_tmp

@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, cast
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
+    HVACMode,
     CURRENT_HVAC_FAN,
     CURRENT_HVAC_HEAT,
     CURRENT_HVAC_IDLE,
@@ -533,12 +534,12 @@ class TcmRunMode(IntEnum):
     HEATING = 0
     COOLING = 1
 
-    def to_hvac_mode(self):
-        return HVAC_MODE_HEAT if self is TcmRunMode.HEATING else HVAC_MODE_COOL
+    def to_hvac_mode(self)-> HVACMode:
+        return HVACMode.HEAT if self is TcmRunMode.HEATING else HVACMode.COOL
 
     @staticmethod
-    def from_hvac_mode(hvac_mode):
-        return TcmRunMode.HEATING if hvac_mode == HVAC_MODE_HEAT else TcmRunMode.COOLING
+    def from_hvac_mode(hvac_mode: HVACMode) -> TcmRunMode:
+        return TcmRunMode.HEATING if hvac_mode == HVACMode.HEAT else TcmRunMode.COOLING
 
 
 # Fan power
@@ -551,11 +552,11 @@ class TcmFanPower(IntEnum):
 
 class Tcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
-    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_COOL]
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
-    _attr_target_temperature_step: Final = 1
+    _attr_target_temperature_step: Final = 0.1
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
     def __init__(
@@ -574,28 +575,28 @@ class Tcm300(SihasEntity, ClimateEntity):
             name=name,
         )
 
-    def set_hvac_mode(self, hvac_mode: str):
-        if hvac_mode == HVAC_MODE_OFF:
+    def set_hvac_mode(self, hvac_mode: HVACMode):
+        if hvac_mode == HVACMode.OFF:
             self.command(TcmRegister.POWER, 0)
         else:
             self.command(TcmRegister.POWER, 1)
-            self.command(TcmRegister.RUN_MODE, TcmRunMode.from_hvac_mode(str))
+            self.command(TcmRegister.RUN_MODE, TcmRunMode.from_hvac_mode(hvac_mode))
 
     def set_temperature(self, **kwargs):
         tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
-        self.command(TcmRegister.DESIRED_TEMPERATURE, int(tmp))
+        self.command(TcmRegister.DESIRED_TEMPERATURE, int(tmp * 10))
 
     def update(self):
         if regs := self.poll():
             is_off = regs[TcmRegister.POWER] == 0
-            cur_tmp = regs[TcmRegister.CURRENT_TEMPERATURE]
-            set_tmp = regs[TcmRegister.DESIRED_TEMPERATURE]
+            cur_tmp = regs[TcmRegister.CURRENT_TEMPERATURE] / 10
+            set_tmp = regs[TcmRegister.DESIRED_TEMPERATURE] / 10
             run_mode = TcmRunMode(regs[TcmRegister.RUN_MODE])
 
             ## reserved
             # out_mode = TcmOutMode(regs[TcmRegister.OUT_MODE])
             # fan_power = TcmFanPower(regs[TcmRegister.FAN_POWER])
 
-            self._attr_hvac_mode = HVAC_MODE_OFF if is_off else run_mode.to_hvac_mode()
+            self._attr_hvac_mode = HVACMode.OFF if is_off else run_mode.to_hvac_mode()
             self._attr_current_temperature = cur_tmp
             self._attr_target_temperature = set_tmp

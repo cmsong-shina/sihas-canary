@@ -98,7 +98,7 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
     "tvoc": {
         "uom": CONCENTRATION_PARTS_PER_BILLION,
         "value_handler": lambda r: r[5],
-        "device_class": DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
+        "device_class": None,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "tvoc",
     },

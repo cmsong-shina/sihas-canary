@@ -8,6 +8,7 @@ from homeassistant.components.sensor import (
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL,
     STATE_CLASS_TOTAL_INCREASING,
+    SensorDeviceClass,
     SensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -15,15 +16,6 @@ from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_BILLION,
     CONCENTRATION_PARTS_PER_MILLION,
-    DEVICE_CLASS_CO2,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_PM10,
-    DEVICE_CLASS_PM25,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
     ENERGY_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
@@ -56,42 +48,42 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
     "humidity": {
         "uom": PERCENTAGE,
         "value_handler": lambda r: round(r[1] / 10, 1),
-        "device_class": DEVICE_CLASS_HUMIDITY,
+        "device_class": SensorDeviceClass.HUMIDITY,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "humidity",
     },
     "temperature": {
         "uom": TEMP_CELSIUS,
         "value_handler": lambda r: round(r[0] / 10, 1),
-        "device_class": DEVICE_CLASS_TEMPERATURE,
+        "device_class": SensorDeviceClass.TEMPERATURE,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "temperature",
     },
     "illuminance": {
         "uom": LIGHT_LUX,
         "value_handler": lambda r: r[6],
-        "device_class": DEVICE_CLASS_ILLUMINANCE,
+        "device_class": SensorDeviceClass.ILLUMINANCE,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "illuminance",
     },
     "co2": {
         "uom": CONCENTRATION_PARTS_PER_MILLION,
         "value_handler": lambda r: r[2],
-        "device_class": DEVICE_CLASS_CO2,
+        "device_class": SensorDeviceClass.CO2,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "co2",
     },
     "pm25": {
         "uom": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         "value_handler": lambda r: r[3],
-        "device_class": DEVICE_CLASS_PM25,
+        "device_class": SensorDeviceClass.PM25,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "pm25",
     },
     "pm10": {
         "uom": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         "value_handler": lambda r: r[4],
-        "device_class": DEVICE_CLASS_PM10,
+        "device_class": SensorDeviceClass.PM10,
         "state_class": STATE_CLASS_MEASUREMENT,
         "sub_id": "pm10",
     },
@@ -114,7 +106,7 @@ PMM_KEY_TOTAL: Final = "total_energy"
 class PmmConfig:
     nuom: str
     value_handler: Callable
-    device_class: str
+    device_class: SensorDeviceClass
     state_class: str
     sub_id: str
 
@@ -123,28 +115,28 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     PMM_KEY_POWER: PmmConfig(
         nuom=POWER_WATT,
         value_handler=lambda r: r[2],
-        device_class=DEVICE_CLASS_POWER,
+        device_class=SensorDeviceClass.POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         sub_id=PMM_KEY_POWER,
     ),
     PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
         nuom=ENERGY_WATT_HOUR,
         value_handler=lambda r: r[10] * 10,
-        device_class=DEVICE_CLASS_ENERGY,
+        device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_MONTH_ENERGY,
     ),
     PMM_KEY_THIS_DAY_ENERGY: PmmConfig(
         nuom=ENERGY_WATT_HOUR,
         value_handler=lambda r: r[8] * 10,
-        device_class=DEVICE_CLASS_ENERGY,
+        device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_DAY_ENERGY,
     ),
     PMM_KEY_TOTAL: PmmConfig(
         nuom=ENERGY_WATT_HOUR,
         value_handler=lambda r: register_put_u32(r[40], r[41]),
-        device_class=DEVICE_CLASS_ENERGY,
+        device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         sub_id=PMM_KEY_TOTAL,
     ),

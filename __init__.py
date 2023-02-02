@@ -23,7 +23,7 @@ PLATFORMS: list[str] = [
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # NOTE: how about checking supported type at here?
     _LOGGER.info(f"entry setuped: {entry.data}")
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 

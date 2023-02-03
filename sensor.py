@@ -36,7 +36,7 @@ from .const import (
     ICON_POWER_METER,
     SIHAS_PLATFORM_SCHEMA,
 )
-from .sihas_base import SihasProxy
+from .sihas_base import SihasProxy, SihasSubEntity
 from .util import register_put_u32
 
 SCAN_INTERVAL = timedelta(seconds=5)
@@ -191,11 +191,11 @@ class Pmm300(SihasProxy):
         ]
 
 
-class PmmVirtualSensor(SensorEntity):
+class PmmVirtualSensor(SihasSubEntity, SensorEntity):
     _attr_icon = ICON_POWER_METER
 
     def __init__(self, proxy: Pmm300, conf: PmmConfig) -> None:
-        super().__init__()
+        super().__init__(proxy)
         self._proxy = proxy
         self._attr_available = self._proxy._attr_available
         self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf.sub_id}"
@@ -254,9 +254,9 @@ class Aqm300(SihasProxy):
         ]
 
 
-class AqmVirtualSensor(SensorEntity):
+class AqmVirtualSensor(SihasSubEntity, SensorEntity):
     def __init__(self, proxy: Aqm300, conf: Dict) -> None:
-        super().__init__()
+        super().__init__(proxy)
 
         self._proxy = proxy
         self._attr_available = self._proxy._attr_available

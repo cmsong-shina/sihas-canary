@@ -21,7 +21,7 @@ from .const import (
     ICON_LIGHT_BULB,
     SIHAS_PLATFORM_SCHEMA,
 )
-from .sihas_base import SihasProxy
+from .sihas_base import SihasProxy, SihasSubEntity
 
 SCAN_INTERVAL = timedelta(seconds=5)
 
@@ -66,11 +66,11 @@ class StmSbm300(SihasProxy):
         return [StmSbmVirtualLight(self, i, self.name) for i in range(0, self.config)]
 
 
-class StmSbmVirtualLight(LightEntity):
+class StmSbmVirtualLight(SihasSubEntity, LightEntity):
     _attr_icon = ICON_LIGHT_BULB
 
     def __init__(self, stbm: StmSbm300, number_of_switch: int, name: Optional[str] = None):
-        super().__init__()
+        super().__init__(stbm)
 
         uid = f"{stbm.device_type}-{stbm.mac}-{number_of_switch}"
 

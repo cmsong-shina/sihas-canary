@@ -54,7 +54,7 @@ from .const import (
 from .errors import ModbusNotEnabledError, PacketSizeError
 from .packet_builder import packet_builder as pb
 from .sender import send
-from .sihas_base import SihasEntity, SihasProxy
+from .sihas_base import SihasEntity, SihasProxy, SihasSubEntity
 
 SCAN_INTERVAL: Final = timedelta(seconds=5)
 
@@ -168,7 +168,7 @@ class Hcm300(SihasProxy):
         return [HcmVirtualThermostat(self, i, self.name) for i in range(0, number_of_room)]
 
 
-class HcmVirtualThermostat(ClimateEntity):
+class HcmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
 
     _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
@@ -179,7 +179,7 @@ class HcmVirtualThermostat(ClimateEntity):
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
     def __init__(self, proxy: Hcm300, number_of_room: int, name: Optional[str] = None) -> None:
-        super().__init__()
+        super().__init__(proxy)
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
 
         # proxy attr
@@ -536,7 +536,7 @@ class TcmRunMode(IntEnum):
     HEATING = 0
     COOLING = 1
 
-    def to_hvac_mode(self)-> HVACMode:
+    def to_hvac_mode(self) -> HVACMode:
         return HVACMode.HEAT if self is TcmRunMode.HEATING else HVACMode.COOL
 
     @staticmethod

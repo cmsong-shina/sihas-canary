@@ -1,12 +1,13 @@
 import logging
 import socket
-from typing import Dict, List, Optional, TypedDict
-from typing_extensions import NotRequired
+from abc import ABCMeta
+from typing import List, Optional, TypedDict
 
 from homeassistant.const import ATTR_ATTRIBUTION
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
+from typing_extensions import NotRequired
 
-from .const import ATTRIBUTION, CONF_IP, CONF_MAC, CONF_TYPE, REG_LENG
+from .const import ATTRIBUTION, CONF_IP, CONF_MAC, CONF_TYPE, DOMAIN, REG_LENG
 from .errors import ModbusNotEnabledError
 from .packet_builder import packet_builder as pb
 from .sender import send
@@ -204,7 +205,6 @@ class SihasProxy(SihasBase):
             config,
         )
         self.registers = [0] * 64
-        # self.proxy_available = False
         self._proxy_updater = Debouncer(self._internal_update)
 
     def _internal_update(self):
@@ -237,3 +237,34 @@ class SihasProxy(SihasBase):
             CONF_MAC: self.mac,
             CONF_TYPE: self.device_type,
         }
+
+
+class SihasSubEntity(metaclass=ABCMeta):
+    """
+    This class provides some functionality for sub devices.
+
+    Sub devices, which created by SihasProxy's implementation, can inherit this class.
+        e.g) `PmmVirtualSensor`
+
+    By inherit this class, sub entities can be grouped as Device.
+        See also: [Device Registry](https://developers.home-assistant.io/docs/device_registry_index/)
+
+
+    Thanks to Murianwind for contribution.
+
+    """
+
+    info: DeviceInfo
+
+    def __init__(self, proxy: SihasProxy) -> None:
+        self.info = {
+            "identifiers": {(DOMAIN, proxy.mac)},
+            "model": proxy.device_type,
+            "name": proxy.device_type,
+            "manufacturer": "SiHAS",
+        }
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Information about this entity/device."""
+        return self.info

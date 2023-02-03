@@ -26,9 +26,7 @@ from homeassistant.components.climate.const import (
     HVAC_MODE_AUTO,
     HVAC_MODE_HEAT,
     HVAC_MODE_OFF,
-    SUPPORT_FAN_MODE,
-    SUPPORT_SWING_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
+    ClimateEntityFeature,
     SWING_BOTH,
     SWING_HORIZONTAL,
     SWING_OFF,
@@ -176,7 +174,7 @@ class HcmVirtualThermostat(ClimateEntity):
     _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
     _attr_max_temp = 65
     _attr_min_temp: Final = 0
-    _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
+    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step = 0.5
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
@@ -265,7 +263,11 @@ class Acm300(SihasEntity, ClimateEntity):
     ]
     _attr_max_temp = 30
     _attr_min_temp = 18
-    _attr_supported_features = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE | SUPPORT_SWING_MODE
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.FAN_MODE
+        | ClimateEntityFeature.SWING_MODE
+    )
     _attr_target_temperature_step = 1
     _attr_temperature_unit = TEMP_CELSIUS
     _attr_swing_modes = [
@@ -408,7 +410,7 @@ class Bcm300(SihasEntity, ClimateEntity):
     _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_AUTO]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
-    _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
+    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step: Final = 1
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
@@ -555,7 +557,7 @@ class Tcm300(SihasEntity, ClimateEntity):
     _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
-    _attr_supported_features: Final = SUPPORT_TARGET_TEMPERATURE
+    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step: Final = 0.1
     _attr_temperature_unit: Final = TEMP_CELSIUS
 

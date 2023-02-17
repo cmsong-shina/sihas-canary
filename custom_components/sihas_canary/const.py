@@ -1,11 +1,11 @@
-"""Constants for the sihas_canary integration."""
+"""Constants for the sihas integration."""
 from typing import Final, List, final
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.climate import PLATFORM_SCHEMA
 
-DOMAIN: Final = "sihas_canary"
+DOMAIN: Final = "sihas"
 ATTRIBUTION: Final = "SiHAS IoT Device"
 ENDIAN: Final = "big"
 

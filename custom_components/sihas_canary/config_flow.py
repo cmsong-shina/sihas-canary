@@ -1,4 +1,4 @@
-"""Config flow for sihas_canary integration."""
+"""Config flow for sihas integration."""
 from __future__ import annotations
 
 import asyncio
@@ -35,7 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for sihas_canary."""
+    """Handle a config flow for sihas."""
 
     VERSION = 1
 

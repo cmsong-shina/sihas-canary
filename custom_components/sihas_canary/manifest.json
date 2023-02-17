@@ -1,6 +1,6 @@
 {
-  "domain": "sihas_canary",
-  "name": "sihas_canary",
+  "domain": "sihas",
+  "name": "sihas",
   "config_flow": true,
   "documentation": "https://github.com/cmsong-shina/sihas-canary",
   "zeroconf": [

@@ -1,0 +1,5 @@
+{
+    "name": "Custom component for SiHAS Wi-Fi device",
+    "country": "KR",
+    "homeassistant": "2023.2.0"
+}

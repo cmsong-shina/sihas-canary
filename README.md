@@ -18,10 +18,11 @@
 
 # 설정
 
+[HomeAssistant 설치 방법](https://sihas.notion.site/e5f74d9dad8d498083a3e33cd3ece3e1)의 *HACS를 사용하여 설치* 항목을 참조해주세요.
+
 > **NOTE**
 >
-> Zeroconf를 사용한 등록으로 변경되었습니다. `configuration.yaml`을 사용하여 수동으로 등록하는 방법은 [v1.0.2](https://github.com/cmsong-shina/sihas-canary/tree/v1.0.2)를 참조하세요.
-
-[HomeAssistant 설정 방법](https://sihas.notion.site/HomeAssistant-1385c75ce8b94e1aa812b70bb6e727c3)
+> 문제가 있을 경우 같은 링크의 *직접 다운로드하여 설치*를 사용해주세요.  
+> 해당 방법은 버전 컴포넌트 버전 [`v1.3.3`](https://github.com/cmsong-shina/sihas-canary/releases/tag/v1.3.3)까지 지원합니다.
 
 <br>

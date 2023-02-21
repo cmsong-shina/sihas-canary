@@ -16,6 +16,6 @@
     "@cmsong-shina"
   ],
   "iot_class": "local_polling",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "issue_tracker": "https://github.com/cmsong-shina/sihas-canary/issues"
 }

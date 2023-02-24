@@ -21,6 +21,9 @@ from homeassistant.const import (
     PERCENTAGE,
     POWER_WATT,
     TEMP_CELSIUS,
+    ELECTRIC_POTENTIAL_VOLT,
+    ELECTRIC_CURRENT_AMPERE,
+    FREQUENCY_HERTZ,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
@@ -39,7 +42,7 @@ from .const import (
 from .sihas_base import SihasProxy, SihasSubEntity
 from .util import register_put_u32
 
-SCAN_INTERVAL = timedelta(seconds=5)
+SCAN_INTERVAL = timedelta(seconds=10)
 
 PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
@@ -100,6 +103,11 @@ PMM_KEY_POWER: Final = "power"
 PMM_KEY_THIS_MONTH_ENERGY: Final = "this_month_energy"
 PMM_KEY_THIS_DAY_ENERGY: Final = "this_day_energy"
 PMM_KEY_TOTAL: Final = "total_energy"
+PMM_KEY_LAST_MONTH_ENERGY: Final = "last_month_energy"
+PMM_KEY_VOLTAGE: Final = "voltage"
+PMM_KEY_CURRENT: Final = "current"
+PMM_KEY_POWER_FACTOR: Final = "power_factor"
+PMM_KEY_FREQUENCY: Final = "frequency"
 
 
 @dataclass
@@ -139,6 +147,41 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         sub_id=PMM_KEY_TOTAL,
+    ),
+    PMM_KEY_LAST_MONTH_ENERGY: PmmConfig(
+        nuom=ENERGY_WATT_HOUR,
+        value_handler=lambda r: r[11] * 10,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=STATE_CLASS_TOTAL,
+        sub_id=PMM_KEY_LAST_MONTH_ENERGY,
+    ),
+    PMM_KEY_VOLTAGE: PmmConfig(
+        nuom=ELECTRIC_POTENTIAL_VOLT,
+        value_handler=lambda r: r[0] / 10,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        sub_id=PMM_KEY_VOLTAGE,
+    ),
+    PMM_KEY_CURRENT: PmmConfig(
+        nuom=ELECTRIC_CURRENT_AMPERE,
+        value_handler=lambda r: r[1] / 10,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=STATE_CLASS_MEASUREMENT,
+        sub_id=PMM_KEY_CURRENT,
+    ),
+    PMM_KEY_POWER_FACTOR: PmmConfig(
+        nuom=PERCENTAGE,
+        value_handler=lambda r: r[3] / 10,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=STATE_CLASS_MEASUREMENT,
+        sub_id=PMM_KEY_POWER_FACTOR,
+    ),
+    PMM_KEY_FREQUENCY: PmmConfig(
+        nuom=FREQUENCY_HERTZ,
+        value_handler=lambda r: r[4] / 10,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=STATE_CLASS_MEASUREMENT,
+        sub_id=PMM_KEY_FREQUENCY,
     ),
 }
 
@@ -188,6 +231,11 @@ class Pmm300(SihasProxy):
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_MONTH_ENERGY]),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_DAY_ENERGY]),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_TOTAL]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_LAST_MONTH_ENERGY]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_VOLTAGE]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_CURRENT]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_POWER_FACTOR]),
+            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_FREQUENCY]),
         ]
 
 

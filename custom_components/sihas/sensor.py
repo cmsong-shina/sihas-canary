@@ -129,14 +129,14 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     ),
     PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
         nuom=ENERGY_WATT_HOUR,
-        value_handler=lambda r: r[10] * 10,
+        value_handler=lambda r: r[10] * 10 + r[16],
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_MONTH_ENERGY,
     ),
     PMM_KEY_THIS_DAY_ENERGY: PmmConfig(
         nuom=ENERGY_WATT_HOUR,
-        value_handler=lambda r: r[8] * 10,
+        value_handler=lambda r: r[8] * 10 + r[16],
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_DAY_ENERGY,

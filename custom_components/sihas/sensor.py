@@ -16,7 +16,7 @@ from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_BILLION,
     CONCENTRATION_PARTS_PER_MILLION,
-    ENERGY_WATT_HOUR,
+    ENERGY_KILO_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
     POWER_WATT,
@@ -113,11 +113,13 @@ PMM_KEY_FREQUENCY: Final = "frequency"
 @dataclass
 class PmmConfig:
     nuom: str
-    value_handler: Callable
+    value_handler: Callable[[List[int]], int | float]
     device_class: SensorDeviceClass
     state_class: str
     sub_id: str
 
+def as_killo_watt(watt: int) -> float:
+    return round(watt / 1000, 2)
 
 PMM_GENERIC_SENSOR_DEFINE: Final = {
     PMM_KEY_POWER: PmmConfig(
@@ -128,29 +130,29 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         sub_id=PMM_KEY_POWER,
     ),
     PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
-        nuom=ENERGY_WATT_HOUR,
-        value_handler=lambda r: r[10] * 10 + r[16],
+        nuom=ENERGY_KILO_WATT_HOUR,
+        value_handler=lambda r: as_killo_watt(r[10] * 10 + r[16]),
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_MONTH_ENERGY,
     ),
     PMM_KEY_THIS_DAY_ENERGY: PmmConfig(
-        nuom=ENERGY_WATT_HOUR,
-        value_handler=lambda r: r[8] * 10 + r[16],
+        nuom=ENERGY_KILO_WATT_HOUR,
+        value_handler=lambda r: as_killo_watt(r[8] * 10 + r[16]),
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_DAY_ENERGY,
     ),
     PMM_KEY_TOTAL: PmmConfig(
-        nuom=ENERGY_WATT_HOUR,
-        value_handler=lambda r: register_put_u32(r[40], r[41]),
+        nuom=ENERGY_KILO_WATT_HOUR,
+        value_handler=lambda r: as_killo_watt(register_put_u32(r[40], r[41])),
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         sub_id=PMM_KEY_TOTAL,
     ),
     PMM_KEY_LAST_MONTH_ENERGY: PmmConfig(
-        nuom=ENERGY_WATT_HOUR,
-        value_handler=lambda r: r[11] * 10,
+        nuom=ENERGY_KILO_WATT_HOUR,
+        value_handler=lambda r: as_killo_watt(r[11] * 10),
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_LAST_MONTH_ENERGY,

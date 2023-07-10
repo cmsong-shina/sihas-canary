@@ -16,6 +16,7 @@ from homeassistant.components.climate.const import (
     CURRENT_HVAC_HEAT,
     CURRENT_HVAC_IDLE,
     CURRENT_HVAC_OFF,
+    FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
     FAN_MEDIUM,
@@ -276,7 +277,7 @@ class Acm300(SihasEntity, ClimateEntity):
         SWING_HORIZONTAL,
         SWING_BOTH,
     ]
-    _attr_fan_modes = [FAN_LOW, FAN_MEDIUM, FAN_HIGH]
+    _attr_fan_modes = [FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
 
     # static final
     REG_ON_OFF: Final = 0

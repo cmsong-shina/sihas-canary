@@ -303,7 +303,7 @@ class Acm300(SihasEntity, ClimateEntity):
         SWING_HORIZONTAL,
         SWING_BOTH,
     ]
-    FAN_TABLE: Final = [FAN_LOW, FAN_MEDIUM, FAN_HIGH]
+    FAN_TABLE: Final = [FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
 
     def __init__(
         self,

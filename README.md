@@ -18,7 +18,7 @@
 
 # 설정
 
-[HomeAssistant 설치 방법](https://sihas.notion.site/SmartThings-Edge-Driver-800dd7b419f44387af77fbd35c7d487a?pvs=4)의 *HACS를 사용하여 설치* 항목을 참조해주세요.
+[HomeAssistant 설치 방법](https://sihas.notion.site/HomeAssistant-1385c75ce8b94e1aa812b70bb6e727c3?pvs=4)의 *HACS를 사용하여 설치* 항목을 참조해주세요.
 
 > **NOTE**
 >

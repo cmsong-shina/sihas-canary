@@ -121,6 +121,14 @@ class PmmConfig:
 def as_killo_watt(watt: int) -> float:
     return round(watt / 1000, 2)
 
+def this_month_value_handler(registers: List[int]) -> float:
+    mag = 10 if not registers[31] else 100
+    return as_killo_watt(registers[10] * mag + registers[16])
+
+def last_month_value_handler(registers: List[int]) -> float:
+    mag = 10 if not registers[31] else 100
+    return as_killo_watt(registers[11] * mag)
+
 PMM_GENERIC_SENSOR_DEFINE: Final = {
     PMM_KEY_POWER: PmmConfig(
         nuom=POWER_WATT,
@@ -131,7 +139,7 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     ),
     PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
         nuom=ENERGY_KILO_WATT_HOUR,
-        value_handler=lambda r: as_killo_watt(r[10] * 10 + r[16]),
+        value_handler=this_month_value_handler,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_THIS_MONTH_ENERGY,
@@ -152,7 +160,7 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     ),
     PMM_KEY_LAST_MONTH_ENERGY: PmmConfig(
         nuom=ENERGY_KILO_WATT_HOUR,
-        value_handler=lambda r: as_killo_watt(r[11] * 10),
+        value_handler=last_month_value_handler,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL,
         sub_id=PMM_KEY_LAST_MONTH_ENERGY,

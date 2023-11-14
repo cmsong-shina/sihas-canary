@@ -10,6 +10,10 @@
     {
       "hostname": "esp*",
       "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "ESP*",
+      "macaddress": "A82BD6*"
     }
   ],
   "codeowners": [

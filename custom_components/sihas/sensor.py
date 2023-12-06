@@ -174,7 +174,7 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
     ),
     PMM_KEY_CURRENT: PmmConfig(
         nuom=ELECTRIC_CURRENT_AMPERE,
-        value_handler=lambda r: r[1] / 10,
+        value_handler=lambda r: r[1] / 100,
         device_class=SensorDeviceClass.CURRENT,
         state_class=STATE_CLASS_MEASUREMENT,
         sub_id=PMM_KEY_CURRENT,

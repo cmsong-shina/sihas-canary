@@ -29,4 +29,4 @@ class InitializingError(Exception):
         self._message = message
 
     def __str__(self) -> str:
-        return f"Error during initializing <{self._device_type}, {self._ip}>: device does not responsed. be sure IP is correct and restart HA to load HCM"
+        return f"Error during initializing <{self._device_type}, {self._ip}>: device does not responsed. be sure IP is correct and restart HA to load HCM/HVM"

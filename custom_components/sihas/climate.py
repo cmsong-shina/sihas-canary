@@ -64,6 +64,7 @@ HCM_REG_SET_TMP: Final = 1
 HCM_REG_CUR_TMP: Final = 4
 HCM_REG_CUR_VALVE: Final = 5
 HCM_REG_NUMBER_OF_ROOMS: Final = 18
+HVM_REG_NUMBER_OF_ROOMS: Final = 21
 HCM_REG_STATE_START: Final = 52
 HCM_REG_ROOM_TEMP_UNIT: Final = 59
 
@@ -95,10 +96,10 @@ async def async_setup_entry(
                 ),
             ],
         )
-    elif entry.data[CONF_TYPE] == "HCM":
+    elif entry.data[CONF_TYPE] == "HCM" or "HVM":
         try:
             async_add_entities(
-                Hcm300(
+                HcmHvm300(
                     entry.data[CONF_IP],
                     entry.data[CONF_MAC],
                     entry.data[CONF_TYPE],
@@ -112,7 +113,7 @@ async def async_setup_entry(
 
         except Exception as e:
             _LOGGER.error(
-                "failed to add device <%s, %s>, be sure IP is correct and restart HA to load HCM: %s",
+                "failed to add device <%s, %s>, be sure IP is correct and restart HA to load HCM/HVM: %s",
                 entry.data[CONF_TYPE],
                 entry.data[CONF_IP],
                 e,
@@ -144,7 +145,7 @@ async def async_setup_entry(
     return
 
 
-class Hcm300(SihasProxy):
+class HcmHvm300(SihasProxy):
     def __init__(
         self,
         ip: str,
@@ -165,11 +166,12 @@ class Hcm300(SihasProxy):
         req = pb.poll()
         resp = send(req, self.ip)
         self.registers = pb.extract_registers(resp)
-        number_of_room = self.registers[HCM_REG_NUMBER_OF_ROOMS]
-        return [HcmVirtualThermostat(self, i, self.name) for i in range(0, number_of_room)]
+        reg_num_rooms: Final[int] = HCM_REG_NUMBER_OF_ROOMS if self.device_type == "HCM" else HVM_REG_NUMBER_OF_ROOMS
+        number_of_room = self.registers[reg_num_rooms]
+        return [HcmHvmVirtualThermostat(self, i, self.name) for i in range(0, number_of_room)]
 
 
-class HcmVirtualThermostat(SihasSubEntity, ClimateEntity):
+class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
 
     _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
@@ -179,7 +181,7 @@ class HcmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_target_temperature_step = 0.5
     _attr_temperature_unit: Final = TEMP_CELSIUS
 
-    def __init__(self, proxy: Hcm300, number_of_room: int, name: Optional[str] = None) -> None:
+    def __init__(self, proxy: HcmHvm300, number_of_room: int, name: Optional[str] = None) -> None:
         super().__init__(proxy)
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
 

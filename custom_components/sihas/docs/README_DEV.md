@@ -82,3 +82,7 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "STM",
 ]
 ```
+
+# Prune data
+
+`hass/core/config/home-assistant_v2.d` 삭제

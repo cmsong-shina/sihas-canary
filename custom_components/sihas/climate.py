@@ -96,7 +96,7 @@ async def async_setup_entry(
                 ),
             ],
         )
-    elif entry.data[CONF_TYPE] == "HCM" or "HVM":
+    elif entry.data[CONF_TYPE] in ["HCM", "HVM"]:
         try:
             async_add_entities(
                 HcmHvm300(

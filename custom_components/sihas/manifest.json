@@ -14,6 +14,10 @@
     {
       "hostname": "ESP*",
       "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_*",
+      "macaddress": "A82BD6*"
     }
   ],
   "codeowners": [

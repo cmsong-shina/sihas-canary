@@ -3,14 +3,9 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Optional
 
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    DEVICE_CLASS_CURRENT,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_POWER_FACTOR,
-    DEVICE_CLASS_VOLTAGE,
-)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from typing_extensions import Final
@@ -93,7 +88,7 @@ class Ccm300(SihasEntity, SwitchEntity):
     def update(self):
         if regs := self.poll():
             self._state = regs[CCM_REG_POWER] == 1
-            self._attributes[DEVICE_CLASS_VOLTAGE] = round(regs[CCM_REG_CUR_V] * 0.01, 3)
-            self._attributes[DEVICE_CLASS_CURRENT] = round(regs[CCM_REG_CUR_A] * 0.001, 3)
-            self._attributes[DEVICE_CLASS_POWER] = round(regs[CCM_REG_CUR_W] * 0.1, 3)
-            self._attributes[DEVICE_CLASS_POWER_FACTOR] = round(regs[CCM_REG_CUR_PF] * 0.1, 3)
+            self._attributes[SensorDeviceClass.VOLTAGE] = round(regs[CCM_REG_CUR_V] * 0.01, 3)
+            self._attributes[SensorDeviceClass.CURRENT] = round(regs[CCM_REG_CUR_A] * 0.001, 3)
+            self._attributes[SensorDeviceClass.POWER] = round(regs[CCM_REG_CUR_W] * 0.1, 3)
+            self._attributes[SensorDeviceClass.POWER_FACTOR] = round(regs[CCM_REG_CUR_PF] * 0.1, 3)

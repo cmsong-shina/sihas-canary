@@ -11,22 +11,12 @@ from typing import Dict, List, Optional, cast
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
+    HVACAction,
     HVACMode,
-    CURRENT_HVAC_FAN,
-    CURRENT_HVAC_HEAT,
-    CURRENT_HVAC_IDLE,
-    CURRENT_HVAC_OFF,
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
     FAN_MEDIUM,
-    HVAC_MODE_AUTO,
-    HVAC_MODE_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_FAN_ONLY,
-    HVAC_MODE_AUTO,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
     ClimateEntityFeature,
     SWING_BOTH,
     SWING_HORIZONTAL,
@@ -174,7 +164,7 @@ class HcmHvm300(SihasProxy):
 class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
 
-    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT]
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT]
     _attr_max_temp = 65
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
@@ -228,13 +218,13 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     def parse_room_summary(self, reg: int) -> RoomSummaryData:
         return RoomSummaryData(
             ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
-            CURRENT_HVAC_IDLE if (((reg & HCM_MASK_VALVE) >> 3) == 0) else CURRENT_HVAC_HEAT,
-            HVAC_MODE_HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVAC_MODE_OFF,
+            HVACAction.IDLE if (((reg & HCM_MASK_VALVE) >> 3) == 0) else HVACAction.HEAT,
+            HVACMode.HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVACMode.OFF,
             ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
         )
 
     def _apply_hvac_mode_on_cache(self, onoff: str) -> int:
-        mask = 1 if onoff == HVAC_MODE_HEAT else 0
+        mask = 1 if onoff == HVACMode.HEAT else 0
         return (self._register_cache & ~HCM_MASK_ONOFF) | mask
 
     def _apply_target_temperature_on_cache(self, t: float) -> int:
@@ -257,12 +247,12 @@ class Acm300(SihasEntity, ClimateEntity):
 
     # entity attribute
     _attr_hvac_modes = [
-        HVAC_MODE_OFF,
-        HVAC_MODE_COOL,
-        HVAC_MODE_DRY,
-        HVAC_MODE_FAN_ONLY,
-        HVAC_MODE_AUTO,
-        HVAC_MODE_HEAT,
+        HVACMode.OFF,
+        HVACMode.COOL,
+        HVACMode.DRY,
+        HVACMode.FAN_ONLY,
+        HVACMode.AUTO,
+        HVACMode.HEAT,
     ]
     _attr_max_temp = 30
     _attr_min_temp = 18
@@ -293,11 +283,11 @@ class Acm300(SihasEntity, ClimateEntity):
     REG_LIST_UCR2: Final = 55
 
     HVAC_MODE_TABLE: Final = [
-        HVAC_MODE_COOL,
-        HVAC_MODE_DRY,
-        HVAC_MODE_FAN_ONLY,
-        HVAC_MODE_AUTO,
-        HVAC_MODE_HEAT,
+        HVACMode.COOL,
+        HVACMode.DRY,
+        HVACMode.FAN_ONLY,
+        HVACMode.AUTO,
+        HVACMode.HEAT,
     ]
     SWING_MODE_TABLE: Final = [
         SWING_OFF,
@@ -327,12 +317,12 @@ class Acm300(SihasEntity, ClimateEntity):
         reg_idx = None
         reg_val = None
 
-        if hvac_mode == HVAC_MODE_OFF:
+        if hvac_mode == HVACMode.OFF:
             reg_idx = Acm300.REG_ON_OFF
             reg_val = 0
         else:
             # if acm turned off, turn on first
-            if self.hvac_mode == HVAC_MODE_OFF:
+            if self.hvac_mode == HVACMode.OFF:
                 self.command(Acm300.REG_ON_OFF, 1)
 
             reg_idx = self.REG_MODE
@@ -353,7 +343,7 @@ class Acm300(SihasEntity, ClimateEntity):
     def update(self):
         if regs := self.poll():
             self._attr_hvac_mode = (
-                HVAC_MODE_OFF
+                HVACMode.OFF
                 if regs[Acm300.REG_ON_OFF] == 0
                 else Acm300.HVAC_MODE_TABLE[regs[Acm300.REG_MODE]]
             )
@@ -410,7 +400,7 @@ BCM_REG_ONLINEST: Final = 14  # 보일러 통신상태(0=온라인, 1=오프라�
 
 class Bcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
-    _attr_hvac_modes: Final = [HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_AUTO]
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.FAN_ONLY, HVACMode.AUTO]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
@@ -436,18 +426,18 @@ class Bcm300(SihasEntity, ClimateEntity):
         self.opmode: Optional[BcmOpMode] = None
 
     def set_hvac_mode(self, hvac_mode: str):
-        if hvac_mode == HVAC_MODE_FAN_ONLY:
+        if hvac_mode == HVACMode.FAN_ONLY:
             self.command(BCM_REG_OUTMODE, 1)
             self.command(BCM_REG_ONOFF, 1)
-        elif hvac_mode == HVAC_MODE_HEAT:
+        elif hvac_mode == HVACMode.HEAT:
             self.command(BCM_REG_OUTMODE, 0)
             self.command(BCM_REG_ONOFF, 1)
             self.command(BCM_REG_TIMERMODE, 1)
-        elif hvac_mode == HVAC_MODE_AUTO:
+        elif hvac_mode == HVACMode.AUTO:
             self.command(BCM_REG_OUTMODE, 0)
             self.command(BCM_REG_ONOFF, 1)
             self.command(BCM_REG_TIMERMODE, 0)
-        elif hvac_mode == HVAC_MODE_OFF:
+        elif hvac_mode == HVACMode.OFF:
             self.command(BCM_REG_ONOFF, 0)
 
     def set_temperature(self, **kwargs):
@@ -481,23 +471,23 @@ class Bcm300(SihasEntity, ClimateEntity):
 
     def _resolve_hvac_mode(self, regs):
         if regs[BCM_REG_ONOFF] == 0:
-            return HVAC_MODE_OFF
+            return HVACMode.OFF
         elif regs[BCM_REG_TIMERMODE] == 1:
-            return HVAC_MODE_HEAT
+            return HVACMode.HEAT
         elif regs[BCM_REG_OUTMODE] == 1:
-            return HVAC_MODE_FAN_ONLY
+            return HVACMode.FAN_ONLY
         else:
-            return HVAC_MODE_AUTO
+            return HVACMode.AUTO
 
     def _resolve_hvac_action(self, regs):
         if regs[BCM_REG_ONOFF] == 0:
-            return CURRENT_HVAC_OFF
+            return HVACAction.OFF
         # elif regs[BCM_REG_OUTMODE] == 1:
-        #     return CURRENT_HVAC_FAN
+        #     return HVACAction.FAN
         elif regs[BCM_REG_FIRE_STATE] == 0:
-            return CURRENT_HVAC_IDLE
+            return HVACAction.IDLE
         else:
-            return CURRENT_HVAC_HEAT
+            return HVACAction.HEAT
 
     def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
         """보일러 운전모드 파싱

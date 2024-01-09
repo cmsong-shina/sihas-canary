@@ -6,10 +6,7 @@ from datetime import timedelta
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
-    SUPPORT_CLOSE,
-    SUPPORT_OPEN,
-    SUPPORT_SET_POSITION,
-    SUPPORT_STOP,
+    CoverEntityFeature,
     CoverEntity,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -65,7 +62,7 @@ REG_RBM_PCT_CUR: Final = 3  # 현재 백분률 레지스터   (0-100%)
 class Rbm300(SihasEntity, CoverEntity):
     _attr_icon = ICON_CURTAIN
     _attr_supported_features: Final = (
-        SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+        CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP | CoverEntityFeature.SET_POSITION
     )
 
     def __init__(

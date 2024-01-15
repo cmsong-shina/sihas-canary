@@ -218,7 +218,7 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     def parse_room_summary(self, reg: int) -> RoomSummaryData:
         return RoomSummaryData(
             ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
-            HVACAction.IDLE if (((reg & HCM_MASK_VALVE) >> 3) == 0) else HVACAction.HEAT,
+            HVACAction.IDLE if (((reg & HCM_MASK_VALVE) >> 3) == 0) else HVACAction.HEATING,
             HVACMode.HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVACMode.OFF,
             ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
         )
@@ -487,7 +487,7 @@ class Bcm300(SihasEntity, ClimateEntity):
         elif regs[BCM_REG_FIRE_STATE] == 0:
             return HVACAction.IDLE
         else:
-            return HVACAction.HEAT
+            return HVACAction.HEATING
 
     def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
         """보일러 운전모드 파싱

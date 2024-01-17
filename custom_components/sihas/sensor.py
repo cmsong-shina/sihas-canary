@@ -9,20 +9,19 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_BILLION,
     CONCENTRATION_PARTS_PER_MILLION,
-    ENERGY_KILO_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
-    POWER_WATT,
-    TEMP_CELSIUS,
-    ELECTRIC_POTENTIAL_VOLT,
-    ELECTRIC_CURRENT_AMPERE,
-    FREQUENCY_HERTZ,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
@@ -55,7 +54,7 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
         "sub_id": "humidity",
     },
     "temperature": {
-        "uom": TEMP_CELSIUS,
+        "uom": UnitOfTemperature.CELSIUS,
         "value_handler": lambda r: round(r[0] / 10, 1),
         "device_class": SensorDeviceClass.TEMPERATURE,
         "state_class": SensorStateClass.MEASUREMENT,
@@ -130,49 +129,49 @@ def last_month_value_handler(registers: List[int]) -> float:
 
 PMM_GENERIC_SENSOR_DEFINE: Final = {
     PMM_KEY_POWER: PmmConfig(
-        nuom=POWER_WATT,
+        nuom=UnitOfPower.WATT,
         value_handler=lambda r: r[2],
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         sub_id=PMM_KEY_POWER,
     ),
     PMM_KEY_THIS_MONTH_ENERGY: PmmConfig(
-        nuom=ENERGY_KILO_WATT_HOUR,
+        nuom=UnitOfEnergy.KILO_WATT_HOUR,
         value_handler=this_month_value_handler,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         sub_id=PMM_KEY_THIS_MONTH_ENERGY,
     ),
     PMM_KEY_THIS_DAY_ENERGY: PmmConfig(
-        nuom=ENERGY_KILO_WATT_HOUR,
+        nuom=UnitOfEnergy.KILO_WATT_HOUR,
         value_handler=lambda r: as_killo_watt(r[8] * 10 + r[16]),
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         sub_id=PMM_KEY_THIS_DAY_ENERGY,
     ),
     PMM_KEY_TOTAL: PmmConfig(
-        nuom=ENERGY_KILO_WATT_HOUR,
+        nuom=UnitOfEnergy.KILO_WATT_HOUR,
         value_handler=lambda r: as_killo_watt(register_put_u32(r[40], r[41])),
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         sub_id=PMM_KEY_TOTAL,
     ),
     PMM_KEY_LAST_MONTH_ENERGY: PmmConfig(
-        nuom=ENERGY_KILO_WATT_HOUR,
+        nuom=UnitOfEnergy.KILO_WATT_HOUR,
         value_handler=last_month_value_handler,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         sub_id=PMM_KEY_LAST_MONTH_ENERGY,
     ),
     PMM_KEY_VOLTAGE: PmmConfig(
-        nuom=ELECTRIC_POTENTIAL_VOLT,
+        nuom=UnitOfElectricPotential.VOLT,
         value_handler=lambda r: r[0] / 10,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         sub_id=PMM_KEY_VOLTAGE,
     ),
     PMM_KEY_CURRENT: PmmConfig(
-        nuom=ELECTRIC_CURRENT_AMPERE,
+        nuom=UnitOfElectricCurrent.AMPERE,
         value_handler=lambda r: r[1] / 100,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -186,7 +185,7 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
         sub_id=PMM_KEY_POWER_FACTOR,
     ),
     PMM_KEY_FREQUENCY: PmmConfig(
-        nuom=FREQUENCY_HERTZ,
+        nuom=UnitOfFrequency.HERTZ,
         value_handler=lambda r: r[4] / 10,
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=SensorStateClass.MEASUREMENT,

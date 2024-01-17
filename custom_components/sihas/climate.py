@@ -25,7 +25,10 @@ from homeassistant.components.climate.const import (
 )
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
+from homeassistant.const import (
+    ATTR_TEMPERATURE,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -169,7 +172,7 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step = 0.5
-    _attr_temperature_unit: Final = TEMP_CELSIUS
+    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
     def __init__(self, proxy: HcmHvm300, number_of_room: int, name: Optional[str] = None) -> None:
         super().__init__(proxy)
@@ -262,7 +265,7 @@ class Acm300(SihasEntity, ClimateEntity):
         | ClimateEntityFeature.SWING_MODE
     )
     _attr_target_temperature_step = 1
-    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_swing_modes = [
         SWING_OFF,
         SWING_VERTICAL,
@@ -405,7 +408,7 @@ class Bcm300(SihasEntity, ClimateEntity):
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step: Final = 1
-    _attr_temperature_unit: Final = TEMP_CELSIUS
+    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
     def __init__(
         self,
@@ -552,7 +555,7 @@ class Tcm300(SihasEntity, ClimateEntity):
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step: Final = 0.1
-    _attr_temperature_unit: Final = TEMP_CELSIUS
+    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
     def __init__(
         self,

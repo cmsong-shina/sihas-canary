@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, IntEnum
 from typing import Dict, List, Optional, cast
+from config.custom_components.sihas.util import clamp_int
 
+from homeassistant.components.water_heater import WaterHeaterEntity
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
     HVACAction,
@@ -399,17 +401,11 @@ BCM_REG_FIRE_STATE: Final = 11  # 보일러 연소상태(0=정지,1=연소)
 BCM_REG_ERRORST: Final = 12  # 보일러 에러상태(0=정상, 그외는 에러)
 BCM_REG_WATERST: Final = 13  # 보일러 물보충상태(0=정상, 1=물보충필요)
 BCM_REG_ONLINEST: Final = 14  # 보일러 통신상태(0=온라인, 1=오프라인)
+BCM_REG_ONSU_HI_LIMIT: Final = 21  # 보일러 물보충상태(0=정상, 1=물보충필요)
+BCM_REG_ONSU_LO_LIMIT: Final = 22  # 보일러 통신상태(0=온라인, 1=오프라인)
 
 
-class Bcm300(SihasEntity, ClimateEntity):
-    _attr_icon = ICON_HEATER
-    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.FAN_ONLY, HVACMode.AUTO]
-    _attr_max_temp: Final = 80
-    _attr_min_temp: Final = 0
-    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
-    _attr_target_temperature_step: Final = 1
-    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
-
+class Bcm300(SihasProxy):
     def __init__(
         self,
         ip: str,
@@ -423,54 +419,81 @@ class Bcm300(SihasEntity, ClimateEntity):
             mac=mac,
             device_type=device_type,
             config=config,
-            name=name,
         )
+        self.name = name
 
+    def get_sub_entities(self) -> List[Entity]:
+        req = pb.poll()
+        resp = send(req, self.ip)
+        self.registers = pb.extract_registers(resp)
+
+        return [
+            Bcm300VirtualThermostat(self),
+            BcmVirtualOnSuLiner(
+                self,
+                (self.registers[BCM_REG_ONSU_LO_LIMIT], self.registers[BCM_REG_ONSU_HI_LIMIT])
+            ),
+        ]
+
+class Bcm300VirtualThermostat(SihasSubEntity, ClimateEntity):
+    _attr_icon = ICON_HEATER
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.FAN_ONLY, HVACMode.AUTO]
+    _attr_max_temp: Final = 80
+    _attr_min_temp: Final = 0
+    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_target_temperature_step: Final = 1
+    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
+
+    def __init__(self, proxy: Bcm300) -> None:
+        super().__init__(proxy)
+
+        self._proxy = proxy
         self.opmode: Optional[BcmOpMode] = None
 
     def set_hvac_mode(self, hvac_mode: str):
         if hvac_mode == HVACMode.FAN_ONLY:
-            self.command(BCM_REG_OUTMODE, 1)
-            self.command(BCM_REG_ONOFF, 1)
+            self._proxy.command(BCM_REG_OUTMODE, 1)
+            self._proxy.command(BCM_REG_ONOFF, 1)
         elif hvac_mode == HVACMode.HEAT:
-            self.command(BCM_REG_OUTMODE, 0)
-            self.command(BCM_REG_ONOFF, 1)
-            self.command(BCM_REG_TIMERMODE, 1)
+            self._proxy.command(BCM_REG_OUTMODE, 0)
+            self._proxy.command(BCM_REG_ONOFF, 1)
+            self._proxy.command(BCM_REG_TIMERMODE, 1)
         elif hvac_mode == HVACMode.AUTO:
-            self.command(BCM_REG_OUTMODE, 0)
-            self.command(BCM_REG_ONOFF, 1)
-            self.command(BCM_REG_TIMERMODE, 0)
+            self._proxy.command(BCM_REG_OUTMODE, 0)
+            self._proxy.command(BCM_REG_ONOFF, 1)
+            self._proxy.command(BCM_REG_TIMERMODE, 0)
         elif hvac_mode == HVACMode.OFF:
-            self.command(BCM_REG_ONOFF, 0)
+            self._proxy.command(BCM_REG_ONOFF, 0)
 
     def set_temperature(self, **kwargs):
         tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
 
         assert self.opmode != None
-        self.command(
+        self._proxy.command(
             BCM_REG_ROOMSETPT if (self.opmode.heatMode == BcmHeatMode.Room) else BCM_REG_ONDOLSETPT,
             math.floor(tmp),
         )
 
     def update(self):
-        if regs := self.poll():
-            self.opmode = self._parse_oper_mode(regs)
+        self._proxy.poll()
+        regs = self._proxy.registers
+        self.opmode = self._parse_oper_mode(regs)
 
-            self._attr_hvac_mode = self._resolve_hvac_mode(regs)
-            self._attr_hvac_action = self._resolve_hvac_action(regs)
+        self._attr_hvac_mode = self._resolve_hvac_mode(regs)
+        self._attr_hvac_action = self._resolve_hvac_action(regs)
 
-            setpt: Optional[int] = None  # set point
-            curpt: Optional[int] = None  # current point
+        setpt: Optional[int] = None  # set point
+        curpt: Optional[int] = None  # current point
 
-            if self.opmode.heatMode == BcmHeatMode.Room:
-                setpt = regs[BCM_REG_ROOMSETPT]
-                curpt = math.floor(regs[BCM_REG_ROOMTEMP] / 10)
-            else:
-                setpt = regs[BCM_REG_ONDOLSETPT]
-                curpt = regs[BCM_REG_ONDOLTEMP]
+        if self.opmode.heatMode == BcmHeatMode.Room:
+            setpt = regs[BCM_REG_ROOMSETPT]
+            curpt = math.floor(regs[BCM_REG_ROOMTEMP] / 10)
+        else:
+            setpt = regs[BCM_REG_ONDOLSETPT]
+            curpt = regs[BCM_REG_ONDOLTEMP]
 
-            self._attr_current_temperature = curpt
-            self._attr_target_temperature = setpt
+        self._attr_current_temperature = curpt
+        self._attr_target_temperature = setpt
 
     def _resolve_hvac_mode(self, regs):
         if regs[BCM_REG_ONOFF] == 0:
@@ -505,6 +528,29 @@ class Bcm300(SihasEntity, ClimateEntity):
             (reg & 1) != 0,
             (reg & (1 << 1)) != 0,
             BcmHeatMode.Ondol if (reg & (1 << 2)) != 0 else BcmHeatMode.Room,
+        )
+
+class BcmVirtualOnSuLiner(SihasSubEntity, WaterHeaterEntity):
+
+    def __init__(self, proxy: Bcm300, temp_range: tuple[int, int], name: Optional[str] = None) -> None:
+        super().__init__(proxy)
+        uid = f"{proxy.device_type}-{proxy.mac}-온수온도"
+
+        self._attr_max_temp: Final[int] = temp_range[0]
+        self._attr_min_temp: Final[int] = temp_range[1]
+
+        # proxy attr
+        self._proxy = proxy
+        self._attr_available = self._proxy._attr_available
+        self._attr_unique_id = uid
+        self._attr_name = f"보일러 온수온도"
+
+    def set_temperature(self, **kwargs):
+        tmp = cast(int, kwargs.get(ATTR_TEMPERATURE))
+
+        self._proxy.command(
+            BCM_REG_ONSUSETPT,
+            tmp
         )
 
 

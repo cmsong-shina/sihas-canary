@@ -114,15 +114,13 @@ async def async_setup_entry(
             )
     elif entry.data[CONF_TYPE] == "BCM":
         async_add_entities(
-            [
-                Bcm300(
-                    entry.data[CONF_IP],
-                    entry.data[CONF_MAC],
-                    entry.data[CONF_TYPE],
-                    entry.data[CONF_CFG],
-                    entry.data[CONF_NAME],
-                ).get_sub_entities(),
-            ],
+            Bcm300(
+                entry.data[CONF_IP],
+                entry.data[CONF_MAC],
+                entry.data[CONF_TYPE],
+                entry.data[CONF_CFG],
+                entry.data[CONF_NAME],
+            ).get_sub_entities(),
         )
     elif entry.data[CONF_TYPE] == "TCM":
         async_add_entities(

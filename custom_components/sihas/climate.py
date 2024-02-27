@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, IntEnum
 from typing import Dict, List, Optional, cast
-from config.custom_components.sihas.util import clamp_int
 
 from homeassistant.components.water_heater import WaterHeaterEntity
 from homeassistant.components.climate import ClimateEntity
@@ -516,7 +515,7 @@ class Bcm300VirtualThermostat(SihasSubEntity, ClimateEntity):
             return HVACAction.HEATING
 
     def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
-        """보일러 운전모드 파싱
+        r"""보일러 운전모드 파싱
         regs[_BCMOPERMODE] = 0b_0000_0000
                                        \\\_온수 ON/OFF Flag
                                         \\_난방 ON/OFF Flag

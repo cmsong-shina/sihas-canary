@@ -122,7 +122,7 @@ async def async_setup_entry(
                     entry.data[CONF_TYPE],
                     entry.data[CONF_CFG],
                     entry.data[CONF_NAME],
-                ),
+                ).get_sub_entities(),
             ],
         )
     elif entry.data[CONF_TYPE] == "TCM":

@@ -493,7 +493,7 @@ class Bcm300(SihasEntity, ClimateEntity):
             return HVACAction.HEATING
 
     def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
-        """보일러 운전모드 파싱
+        r"""보일러 운전모드 파싱
         regs[_BCMOPERMODE] = 0b_0000_0000
                                        \\\_온수 ON/OFF Flag
                                         \\_난방 ON/OFF Flag

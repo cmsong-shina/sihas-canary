@@ -36,7 +36,7 @@ PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if entry.data[CONF_TYPE] in ["STM", "SBM"]:
+    if entry.data[CONF_TYPE] in ["STM", "SBM", "SQM"]:
         stm_sbm = StmSbm300(
             ip=entry.data[CONF_IP],
             mac=entry.data[CONF_MAC],

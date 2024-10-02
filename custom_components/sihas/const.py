@@ -32,6 +32,12 @@ DEVICE_TYPE: Final = {
     "RBM": 19,
     "HGW": 20,
     "SBM": 21,
+    "PCM": 22,
+    "ISM": 23,
+    "CGM": 24,
+    "WCM": 25,
+    "SHB": 26,
+    "SQM": 27,
 }
 
 SUPPORT_DEVICE: Final[List[str]] = [
@@ -45,6 +51,7 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "RBM",
     "SBM",
     "SDM",
+    "SQM",
     "STM",
     "TCM",
 ]

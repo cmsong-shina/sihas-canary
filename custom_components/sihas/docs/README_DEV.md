@@ -67,7 +67,7 @@ PLATFORMS: list[str] = [
 ```
 
 
-신규 장치일 경우 `const.py`에 장치 타입을 추가한다.
+신규 장치일 경우 `custom_components/sihas/const.py`와 `custom_components/sihas/manifest.json`에 장치 타입을 추가한다.
 
 ```diff
 SUPPORT_DEVICE: Final[List[str]] = [
@@ -81,6 +81,38 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "SBM",
     "STM",
 ]
+```
+
+
+```diff
+ {
+   "domain": "sihas",
+   "name": "sihas",
+   "config_flow": true,
+   "documentation": "https://github.com/cmsong-shina/sihas-canary",
+   "zeroconf": [
+     "_sihas._tcp.local."
+   ],
+   "dhcp": [
+     {
+       "hostname": "esp*",
+       "macaddress": "A82BD6*"
+     },
+
+     // ...
+
++    {
++      "hostname": "SiHAS_SBM_*",
++      "macaddress": "A82BD6*"
++    }
+   ],
+   "codeowners": [
+     "@cmsong-shina"
+   ],
+   "iot_class": "local_polling",
+   "version": "1.6.2",
+   "issue_tracker": "https://github.com/cmsong-shina/sihas-canary/issues"
+ }
 ```
 
 # Prune data

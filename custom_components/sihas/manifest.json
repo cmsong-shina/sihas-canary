@@ -18,6 +18,58 @@
     {
       "hostname": "SiHAS_*",
       "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_ACM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_AQM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_BCM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_CCM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_HCM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_HVM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_PMM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_RBM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_SBM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_SDM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_SQM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_STM_*",
+      "macaddress": "A82BD6*"
+    },
+    {
+      "hostname": "SiHAS_TCM_*",
+      "macaddress": "A82BD6*"
     }
   ],
   "codeowners": [

@@ -7,6 +7,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, IntEnum
+import time
 from typing import Dict, List, Optional, cast
 
 from homeassistant.components.climate import ClimateEntity
@@ -316,22 +317,44 @@ class Acm300(SihasEntity, ClimateEntity):
             name=name,
         )
 
+    # TODO: async fuction raise excaption. why?
     def set_hvac_mode(self, hvac_mode: str):
-        reg_idx = None
-        reg_val = None
+        """
+        Set the HVAC mode for the AC unit.
+
+        This method handles the setting of HVAC mode for the AC unit, considering
+        the differences between how Home Assistant (HA) and the AC unit treat on/off
+        states and HVAC modes. In HA, there is no explicit ON command, so this method
+        ensures the correct sequence of commands is sent to the AC unit.
+
+        Args:
+            hvac_mode (str): The desired HVAC mode to set. This should be one of the
+                             modes defined in HVACMode.
+
+        Behavior:
+            - If the command is OFF, the AC unit is turned off.
+            - If the command is not OFF, the mode is changed first, followed by a delay
+              to prevent IR conflict, and then the AC unit is turned on.
+
+        Note:
+            - A delay of 0.5 seconds is introduced between changing the mode and turning
+              the unit on to prevent IR signal conflicts.
+        """
 
         if hvac_mode == HVACMode.OFF:
-            reg_idx = Acm300.REG_ON_OFF
-            reg_val = 0
-        else:
-            # if acm turned off, turn on first
-            if self.hvac_mode == HVACMode.OFF:
-                self.command(Acm300.REG_ON_OFF, 1)
+            self.command(Acm300.REG_ON_OFF, 0)
+            return
 
-            reg_idx = self.REG_MODE
-            reg_val = self.HVAC_MODE_TABLE.index(hvac_mode)
+        # Change mode first
+        if self.hvac_mode != hvac_mode:
+            self.command(
+                self.REG_MODE,
+                self.HVAC_MODE_TABLE.index(hvac_mode),
+            )
+            time.sleep(0.5) # Delay to prevent IR conflict
 
-        self.command(reg_idx, reg_val)
+        if self.hvac_mode == HVACMode.OFF:
+            self.command(Acm300.REG_ON_OFF, 1)
 
     def set_temperature(self, **kwargs):
         tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))

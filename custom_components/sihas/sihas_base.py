@@ -73,7 +73,7 @@ class SihasBase:
             return regs
 
         except ModbusNotEnabledError:
-            _LOGGER.warn("failed to update: modbus not enabled <%s, %s>", self.device_type, self.ip)
+            _LOGGER.warning("failed to update: modbus not enabled <%s, %s>", self.device_type, self.ip)
 
         except socket.timeout:
             _LOGGER.debug("failed to update: timeout <%s, %s>", self.device_type, self.ip)
@@ -106,7 +106,7 @@ class SihasBase:
                 return True
 
         except ModbusNotEnabledError:
-            _LOGGER.warn(
+            _LOGGER.warning(
                 "failed to command: modbus not enabled <%s, %s>", self.device_type, self.ip
             )
 
@@ -114,7 +114,7 @@ class SihasBase:
             _LOGGER.info("failed to command: timeout <%s, %s>", self.device_type, self.ip)
 
         except Exception as err:
-            _LOGGER.warn(
+            _LOGGER.warning(
                 "failed to command: unhandled exception: %s <%s, %s>",
                 err,
                 self.device_type,

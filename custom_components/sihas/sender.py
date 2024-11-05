@@ -45,5 +45,5 @@ def scan(data: bytes, ip: str, retry: int = 10) -> typing.Optional[str]:
         except Exception as e:
             _LOGGER.error(f"failed to scan device: , {e}")
             break
-    _LOGGER.warn(f"failed to scan device: timeout")
+    _LOGGER.warning(f"failed to scan device: timeout")
     return None

@@ -117,7 +117,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo):
         # data will come like
         #   {'ip': '192.168.xxx.xxx', 'hostname': 'esp[-_][0-9a-f]{12}', 'macaddress': '123456abcdef'}
-        _LOGGER.warn(f"sihas device found via dhcp: {discovery_info}")
+        _LOGGER.info(f"sihas device found via dhcp: {discovery_info}")
 
         # wait for device
         await asyncio.sleep(10)
@@ -160,7 +160,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         else:
             # if not match, abort
-            _LOGGER.warn(f"found device but did not response about scan: {discovery_info}")
+            _LOGGER.warning(f"found device but did not response about scan: {discovery_info}")
             return self.async_abort(reason="can not scan found device")
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:

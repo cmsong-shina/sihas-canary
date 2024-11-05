@@ -172,7 +172,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data[CONF_CFG] = user_input[CONF_CFG]
             self.data[CONF_NAME] = user_input[CONF_NAME]
             return self.async_create_entry(
-                title=self.data[CONF_TYPE],
+                title=user_input[CONF_NAME],
                 data=self.data,
             )
 

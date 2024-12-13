@@ -1,5 +1,9 @@
 {
-    "name": "Custom component for SiHAS Wi-Fi device",
-    "country": "KR",
-    "homeassistant": "2023.2.0"
+  "name": "Custom component for SiHAS Wi-Fi device",
+  "content_in_root": false,
+  "filename": "dist/sihas-canary.js",
+  "domains": ["lovelace"],
+  "iot_class": "local_polling",
+  "country": "KR",
+  "homeassistant": "2023.2.0"
 }

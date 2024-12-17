@@ -139,6 +139,13 @@ async def async_setup_entry(
     return
 
 
+
+HCM_SUPPORTED_FEATURES: Final = (
+    ClimateEntityFeature.TARGET_TEMPERATURE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
+)
+
 class HcmHvm300(SihasProxy):
     def __init__(
         self,
@@ -171,7 +178,7 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT]
     _attr_max_temp = 65
     _attr_min_temp: Final = 0
-    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_supported_features: Final = HCM_SUPPORTED_FEATURES
     _attr_target_temperature_step = 0.5
     _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
@@ -264,6 +271,8 @@ class Acm300(SihasEntity, ClimateEntity):
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
         | ClimateEntityFeature.SWING_MODE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
     )
     _attr_target_temperature_step = 1
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
@@ -424,12 +433,19 @@ BCM_REG_WATERST: Final = 13  # 보일러 물보충상태(0=정상, 1=물보충�
 BCM_REG_ONLINEST: Final = 14  # 보일러 통신상태(0=온라인, 1=오프라인)
 
 
+BCM_SUPPORTED_FEATURES: Final = (
+    ClimateEntityFeature.TARGET_TEMPERATURE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
+)
+
+
 class Bcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
     _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.FAN_ONLY, HVACMode.AUTO]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
-    _attr_supported_features: Final = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_supported_features: Final = BCM_SUPPORTED_FEATURES
     _attr_target_temperature_step: Final = 1
     _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 

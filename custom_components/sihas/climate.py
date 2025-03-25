@@ -470,19 +470,19 @@ class Bcm300(SihasEntity, ClimateEntity):
     def set_hvac_mode(self, hvac_mode: str):
         if hvac_mode == HVACMode.FAN_ONLY:
             self.command(BCM_REG_ONOFF, 1)
-            time.sleep(0.2)
+            time.sleep(0.5)
             self.command(BCM_REG_OUTMODE, 1)
         elif hvac_mode == HVACMode.HEAT:
             self.command(BCM_REG_ONOFF, 1)
-            time.sleep(0.2)
+            time.sleep(0.5)
             self.command(BCM_REG_OUTMODE, 0)
-            time.sleep(0.2)
+            time.sleep(0.5)
             self.command(BCM_REG_TIMERMODE, 1)
         elif hvac_mode == HVACMode.AUTO:
             self.command(BCM_REG_ONOFF, 1)
-            time.sleep(0.2)
+            time.sleep(0.5)
             self.command(BCM_REG_OUTMODE, 0)
-            time.sleep(0.2)
+            time.sleep(0.5)
             self.command(BCM_REG_TIMERMODE, 0)
         elif hvac_mode == HVACMode.OFF:
             self.command(BCM_REG_ONOFF, 0)

@@ -439,6 +439,15 @@ BCM_SUPPORTED_FEATURES: Final = (
     | ClimateEntityFeature.TURN_OFF
 )
 
+class BoilerManufactuer(IntEnum):
+    KYUNGDONG = 0
+    KITURAMI = 1
+    DAESUNG = 2
+    RINNAI = 3
+    DMAX = 4
+    RESERVED1 = 5
+    RESERVED2 = 6
+
 
 class Bcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
@@ -466,26 +475,40 @@ class Bcm300(SihasEntity, ClimateEntity):
         )
 
         self.opmode: Optional[BcmOpMode] = None
+        self.manufacturer: Optional[BoilerManufactuer] = None
+        self.is_boiler_on: Optional[bool] = None
+        self.is_outmode: Optional[bool] = None
+        self.is_timermode: Optional[bool] = None
 
     def set_hvac_mode(self, hvac_mode: str):
         """
-        FIXME: Evil blocking sleep
-        Should be refactored to async
+        FIXME: Evil blocking sleep Should be refactored to async
         """
-        if hvac_mode == HVACMode.FAN_ONLY:
-            self.command(BCM_REG_ONOFF, 1)
-            time.sleep(0.5)
-            self.command(BCM_REG_OUTMODE, 1)
-        elif hvac_mode == HVACMode.HEAT:
-            self.command(BCM_REG_ONOFF, 1)
-            time.sleep(0.5)
+        if hvac_mode == HVACMode.AUTO: # 온도(실내 혹은 온돌) 모드. 실내/온돌 전환은 지원하지 않음.
+            if not self.is_boiler_on:
+                self.command(BCM_REG_ONOFF, 1)
+                time.sleep(1)
+            if self.is_outmode:
+                self.command(BCM_REG_OUTMODE, 0)
+                time.sleep(1)
+            if self.is_timermode:
+                self.command(BCM_REG_TIMERMODE, 0)
+        elif hvac_mode == HVACMode.HEAT: # 예약모드
+            if not self.is_boiler_on:
+                self.command(BCM_REG_ONOFF, 1)
+                time.sleep(1)
+            if self.is_outmode:
+                self.command(BCM_REG_OUTMODE, 0)
+                time.sleep(1)
+            self.command(BCM_REG_TIMERMODE, 1)
+        elif hvac_mode == HVACMode.FAN_ONLY: # 외출 모드
+            if not self.is_boiler_on:
+                self.command(BCM_REG_ONOFF, 1)
+                time.sleep(1)
             self.command(BCM_REG_OUTMODE, 0)
-        elif hvac_mode == HVACMode.AUTO:
-            self.command(BCM_REG_ONOFF, 1)
-            time.sleep(0.5)
-            self.command(BCM_REG_OUTMODE, 0)
-        elif hvac_mode == HVACMode.OFF:
-            self.command(BCM_REG_ONOFF, 0)
+        elif hvac_mode == HVACMode.OFF: # 끄기
+            if self.is_boiler_on:
+                self.command(BCM_REG_ONOFF, 0)
 
     def set_temperature(self, **kwargs):
         tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
@@ -515,6 +538,10 @@ class Bcm300(SihasEntity, ClimateEntity):
 
             self._attr_current_temperature = curpt
             self._attr_target_temperature = setpt
+            self.manufacturer = BoilerManufactuer(regs[15])
+            self.is_boiler_on = regs[0] == 1
+            self.is_outmode = regs[5] == 1
+            self.is_timermode = regs[6] == 1
 
     def _resolve_hvac_mode(self, regs):
         if regs[BCM_REG_ONOFF] == 0:

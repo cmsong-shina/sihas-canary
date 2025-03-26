@@ -505,7 +505,7 @@ class Bcm300(SihasEntity, ClimateEntity):
             if not self.is_boiler_on:
                 self.command(BCM_REG_ONOFF, 1)
                 time.sleep(1)
-            self.command(BCM_REG_OUTMODE, 0)
+            self.command(BCM_REG_OUTMODE, 1)
         elif hvac_mode == HVACMode.OFF: # 끄기
             if self.is_boiler_on:
                 self.command(BCM_REG_ONOFF, 0)

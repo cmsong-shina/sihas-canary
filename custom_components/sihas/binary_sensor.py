@@ -67,4 +67,4 @@ class AcmVibrationSensor(SihasEntity, BinarySensorEntity):
     
     def update(self):
         if regs := self.poll():            
-            self._attr_is_on = regs[7] == 0
+            self._attr_is_on = regs[7] != 0

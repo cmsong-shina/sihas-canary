@@ -11,6 +11,7 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[str] = [
+    "binary_sensor",
     "button",
     "climate",
     "cover",

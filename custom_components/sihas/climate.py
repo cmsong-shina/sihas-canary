@@ -247,8 +247,8 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
 @dataclass
 class RoomSummaryData:
     current_temperature: float
-    hvac_action: str
-    hvac_mode: str
+    hvac_action: HVACAction
+    hvac_mode: HVACMode
     target_temperature: float
 
 
@@ -327,7 +327,7 @@ class Acm300(SihasEntity, ClimateEntity):
         )
 
     # TODO: async fuction raise excaption. why?
-    def set_hvac_mode(self, hvac_mode: str):
+    def set_hvac_mode(self, hvac_mode: HVACMode):
         """
         Set the HVAC mode for the AC unit.
 

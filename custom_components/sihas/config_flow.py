@@ -9,8 +9,9 @@ from typing import Any, Dict, List, cast
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.components import dhcp, zeroconf
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.service_info import dhcp, zeroconf
+from homeassistant.config_entries import ConfigFlowResult
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
@@ -43,7 +44,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.sihas: SihasBase
         self.data: Dict[str, Any] = {}
 
-    async def async_step_zeroconf(self, discovery_info: zeroconf.ZeroconfServiceInfo) -> FlowResult:
+    async def async_step_zeroconf(self, discovery_info: zeroconf.ZeroconfServiceInfo) -> ConfigFlowResult:
         _LOGGER.debug("device found by zeroconf: %s", discovery_info)
 
         # {
@@ -84,7 +85,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_zeroconf_confirm(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
 
         if user_input:
             self.data[CONF_NAME] = user_input[CONF_NAME]
@@ -163,7 +164,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.warning(f"found device but did not response about scan: {discovery_info}")
             return self.async_abort(reason="can not scan found device")
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input:
             # TODO: may need to confirm user input and check communicate with device.
             self.data[CONF_IP] = user_input[CONF_IP]

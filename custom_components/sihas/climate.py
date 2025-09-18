@@ -1,6 +1,8 @@
 """Platform for light integration."""
+
 from __future__ import annotations
 
+from atexit import register
 import logging
 import math
 from abc import abstractmethod
@@ -8,7 +10,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, IntEnum
 import time
-from typing import Dict, List, Optional, cast
+from typing import List, Optional, cast, Final
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
@@ -33,7 +35,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from typing_extensions import Final
 
 from .const import (
     CONF_CFG,
@@ -112,6 +113,28 @@ async def async_setup_entry(
                 entry.data[CONF_IP],
                 e,
             )
+    elif entry.data[CONF_TYPE] in ["HQM"]:
+        try:
+            async_add_entities(
+                Hqm300(
+                    entry.data[CONF_IP],
+                    entry.data[CONF_MAC],
+                    entry.data[CONF_TYPE],
+                    entry.data[CONF_CFG],
+                    entry.data[CONF_NAME],
+                ).get_sub_entities()
+            )
+
+        except (ModbusNotEnabledError, PacketSizeError) as e:
+            raise e
+
+        except Exception as e:
+            _LOGGER.error(
+                "failed to add device <%s, %s>, be sure IP is correct and restart HA to load HQM: %s",
+                entry.data[CONF_TYPE],
+                entry.data[CONF_IP],
+                e,
+            )
     elif entry.data[CONF_TYPE] == "BCM":
         async_add_entities(
             [
@@ -139,12 +162,12 @@ async def async_setup_entry(
     return
 
 
-
 HCM_SUPPORTED_FEATURES: Final = (
     ClimateEntityFeature.TARGET_TEMPERATURE
     | ClimateEntityFeature.TURN_ON
     | ClimateEntityFeature.TURN_OFF
 )
+
 
 class HcmHvm300(SihasProxy):
     def __init__(
@@ -167,9 +190,16 @@ class HcmHvm300(SihasProxy):
         req = pb.poll()
         resp = send(req, self.ip)
         self.registers = pb.extract_registers(resp)
-        reg_num_rooms: Final[int] = HCM_REG_NUMBER_OF_ROOMS if self.device_type == "HCM" else HVM_REG_NUMBER_OF_ROOMS
+        reg_num_rooms: Final[int] = (
+            HCM_REG_NUMBER_OF_ROOMS
+            if self.device_type == "HCM"
+            else HVM_REG_NUMBER_OF_ROOMS
+        )
         number_of_room = self.registers[reg_num_rooms]
-        return [HcmHvmVirtualThermostat(self, i, self.name) for i in range(0, number_of_room)]
+        return [
+            HcmHvmVirtualThermostat(self, i, self.name)
+            for i in range(0, number_of_room)
+        ]
 
 
 class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
@@ -182,7 +212,9 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_target_temperature_step = 0.5
     _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
-    def __init__(self, proxy: HcmHvm300, number_of_room: int, name: Optional[str] = None) -> None:
+    def __init__(
+        self, proxy: HcmHvm300, number_of_room: int, name: Optional[str] = None
+    ) -> None:
         super().__init__(proxy)
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
 
@@ -191,7 +223,9 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
         self._attr_available = self._proxy._attr_available
         self._room_register_index = HCM_REG_STATE_START + number_of_room
         self._attr_unique_id = uid
-        self._attr_name = f"{name} #{number_of_room + 1}" if name else self._attr_unique_id
+        self._attr_name = (
+            f"{name} #{number_of_room + 1}" if name else self._attr_unique_id
+        )
 
     def set_hvac_mode(self, hvac_mode: str):
         self._proxy.command(
@@ -229,7 +263,11 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     def parse_room_summary(self, reg: int) -> RoomSummaryData:
         return RoomSummaryData(
             ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
-            HVACAction.IDLE if (((reg & HCM_MASK_VALVE) >> 3) == 0) else HVACAction.HEATING,
+            (
+                HVACAction.IDLE
+                if (((reg & HCM_MASK_VALVE) >> 3) == 0)
+                else HVACAction.HEATING
+            ),
             HVACMode.HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVACMode.OFF,
             ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
         )
@@ -250,6 +288,211 @@ class RoomSummaryData:
     hvac_action: HVACAction
     hvac_mode: HVACMode
     target_temperature: float
+
+
+HQM_REG_ONOFF: Final = 0
+HQM_REG_SET_TMP: Final = 1
+HQM_REG_MODE: Final = 2
+HQM_REG_CUR_TMP: Final = 4
+HQM_REG_CUR_VALVE: Final = 5
+HQM_REG_CUR_HUMID: Final = 7
+HQM_REG_NUMBER_OF_ROOMS: Final = 16
+HQM_REG_STATE_START: Final = 23
+
+
+class Hqm300(SihasProxy):
+    def __init__(
+        self,
+        ip: str,
+        mac: str,
+        device_type: str,
+        config: int,
+        name: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            ip,
+            mac,
+            device_type,
+            config,
+        )
+        self.name = name
+
+    def get_sub_entities(self) -> List[Entity]:
+        req = pb.poll()
+        resp = send(req, self.ip)
+        self.registers = pb.extract_registers(resp)
+        is_wv = self.config == 0
+        is_slave = self.registers[9] != 0
+
+        if is_wv and is_slave:
+            return [HqmStandaloneThermostat(self, self.name)]
+        else:
+            number_of_room = self.registers[HQM_REG_NUMBER_OF_ROOMS]
+            return [
+                HqmVirtualThermostat(self, i, self.name)
+                for i in range(0, number_of_room)
+            ]
+
+
+class HqmVirtualThermostat(SihasSubEntity, ClimateEntity):
+    _attr_icon = ICON_HEATER
+
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT]
+    _attr_max_temp = 65
+    _attr_min_temp: Final = 0
+    _attr_supported_features: Final = HCM_SUPPORTED_FEATURES
+    _attr_target_temperature_step = 0.5
+    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
+
+    def __init__(
+        self, proxy: Hqm300, number_of_room: int, name: Optional[str] = None
+    ) -> None:
+        super().__init__(proxy)
+        uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
+
+        # proxy attr
+        self._proxy = proxy
+        self._attr_available = self._proxy._attr_available
+        self._room_register_index = HQM_REG_STATE_START + number_of_room
+        self._attr_unique_id = uid
+        self._attr_name = (
+            f"{name} #{number_of_room + 1}" if name else self._attr_unique_id
+        )
+
+    def set_hvac_mode(self, hvac_mode: str):
+        self._proxy.command(
+            self._room_register_index,
+            self._apply_hvac_mode_on_cache(hvac_mode),
+        )
+
+    def set_temperature(self, **kwargs):
+        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
+        self._proxy.command(
+            self._room_register_index,
+            self._apply_target_temperature_on_cache(tmp),
+        )
+
+    def update(self):
+        self._proxy.update()
+        self._attr_available = self._proxy._attr_available
+        self._register_cache = self._proxy.registers[self._room_register_index]
+
+        # 최대 온도/온도 단위 가변 설정
+        self._attr_max_temp = 65 if self.temperature_magnification == 0 else (65 / 2)
+        self._attr_target_temperature_step = self.temperature_magnification
+
+        summary = self.parse_room_summary(self._register_cache)
+        self._attr_hvac_mode = summary.hvac_mode
+        self._attr_current_temperature = summary.current_temperature
+        self._attr_target_temperature = summary.target_temperature
+        self._attr_hvac_action = summary.hvac_action
+
+    @property
+    def temperature_magnification(self) -> float:
+        """room summary의 온도 배율을 반환"""
+        return 0.5  # always fixed to 0.5
+
+    def parse_room_summary(self, reg: int) -> RoomSummaryData:
+        return RoomSummaryData(
+            ((reg & HCM_MASK_CURTMP) >> 4) * self.temperature_magnification,
+            (
+                HVACAction.IDLE
+                if (((reg & HCM_MASK_VALVE) >> 3) == 0)
+                else HVACAction.HEATING
+            ),
+            HVACMode.HEAT if ((reg & HCM_MASK_ONOFF) == 1) else HVACMode.OFF,
+            ((reg & HCM_MASK_SETTMP) >> 10) * self.temperature_magnification,
+        )
+
+    def _apply_hvac_mode_on_cache(self, onoff: str) -> int:
+        mask = 1 if onoff == HVACMode.HEAT else 0
+        return (self._register_cache & ~HCM_MASK_ONOFF) | mask
+
+    def _apply_target_temperature_on_cache(self, t: float) -> int:
+        t = t / self.temperature_magnification
+        mask = int(t)
+        return (self._register_cache & ~HCM_MASK_SETTMP) | (mask << 10)
+
+
+class HqmStandaloneThermostat(SihasSubEntity, ClimateEntity):
+    _attr_icon = ICON_HEATER
+
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT]
+    _attr_max_temp = 65
+    _attr_min_temp: Final = 0
+    _attr_supported_features: Final = HCM_SUPPORTED_FEATURES
+    _attr_target_temperature_step = 0.1
+    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
+
+    def __init__(self, proxy: Hqm300, name: Optional[str] = None) -> None:
+        super().__init__(proxy)
+        uid = f"{proxy.device_type}-{proxy.mac}"
+
+        # proxy attr
+        self._proxy = proxy
+        self._attr_available = self._proxy._attr_available
+        self._attr_unique_id = uid
+        self._attr_name = name if name else self._attr_unique_id
+
+    def set_hvac_mode(self, hvac_mode: HVACMode):
+        mode: int | None = None
+
+        match hvac_mode:
+            case HVACMode.OFF:
+                mode = 2
+
+            case HVACMode.HEAT:
+                mode = 3
+
+        if mode is None:
+            _LOGGER.error(f"Not supported HVACMode for HQM-300: {hvac_mode}")
+            return
+
+        self._proxy.command(HQM_REG_MODE, mode)
+
+    def set_temperature(self, **kwargs):
+        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
+        self._proxy.command(
+            HQM_REG_CUR_TMP,
+            int(tmp * 10),
+        )
+
+    def update(self):
+        self._proxy.update()
+        registers = self._proxy.registers
+
+        match (
+            registers[HQM_REG_ONOFF],
+            registers[HQM_REG_MODE],
+        ):
+            case (0, _):
+                self._attr_hvac_mode = HVACMode.OFF
+            case (_, 0 | 1):
+                self._attr_hvac_mode = HVACMode.HEAT
+            case (_, 2):
+                self._attr_hvac_mode = HVACMode.OFF
+            case _:
+                _LOGGER.warning(
+                    f"Not implemented HVAC mode ({registers[HQM_REG_ONOFF]}, {registers[HQM_REG_MODE]})"
+                )
+
+        self._attr_current_temperature = registers[HQM_REG_CUR_TMP] / 10
+        self._attr_target_temperature = registers[HQM_REG_SET_TMP] / 10
+
+        match (
+            registers[HQM_REG_ONOFF],
+            registers[HQM_REG_CUR_VALVE],
+        ):
+            case (0, _):
+                self._attr_hvac_action = HVACAction.OFF
+            case (_, 0):
+                self._attr_hvac_action = HVACAction.IDLE
+            case (_, 1):
+                self._attr_hvac_action = HVACAction.HEATING
+            case _:
+                _LOGGER.warning(
+                    f"Not implemented HVAC actions ({registers[HQM_REG_ONOFF]}, {registers[HQM_REG_CUR_VALVE]})"
+                )
 
 
 class Acm300(SihasEntity, ClimateEntity):
@@ -360,7 +603,7 @@ class Acm300(SihasEntity, ClimateEntity):
                 self.REG_MODE,
                 self.HVAC_MODE_TABLE.index(hvac_mode),
             )
-            time.sleep(0.5) # Delay to prevent IR conflict
+            time.sleep(0.5)  # Delay to prevent IR conflict
 
         if self.hvac_mode == HVACMode.OFF:
             self.command(Acm300.REG_ON_OFF, 1)
@@ -439,6 +682,7 @@ BCM_SUPPORTED_FEATURES: Final = (
     | ClimateEntityFeature.TURN_OFF
 )
 
+
 class BoilerManufactuer(IntEnum):
     KYUNGDONG = 0
     KITURAMI = 1
@@ -451,7 +695,12 @@ class BoilerManufactuer(IntEnum):
 
 class Bcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
-    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT, HVACMode.FAN_ONLY, HVACMode.AUTO]
+    _attr_hvac_modes: Final = [
+        HVACMode.OFF,
+        HVACMode.HEAT,
+        HVACMode.FAN_ONLY,
+        HVACMode.AUTO,
+    ]
     _attr_max_temp: Final = 80
     _attr_min_temp: Final = 0
     _attr_supported_features: Final = BCM_SUPPORTED_FEATURES
@@ -484,7 +733,9 @@ class Bcm300(SihasEntity, ClimateEntity):
         """
         FIXME: Evil blocking sleep Should be refactored to async
         """
-        if hvac_mode == HVACMode.AUTO: # 온도(실내 혹은 온돌) 모드. 실내/온돌 전환은 지원하지 않음.
+        if (
+            hvac_mode == HVACMode.AUTO
+        ):  # 온도(실내 혹은 온돌) 모드. 실내/온돌 전환은 지원하지 않음.
             if not self.is_boiler_on:
                 self.command(BCM_REG_ONOFF, 1)
                 time.sleep(1)
@@ -493,7 +744,7 @@ class Bcm300(SihasEntity, ClimateEntity):
                 time.sleep(1)
             if self.is_timermode:
                 self.command(BCM_REG_TIMERMODE, 0)
-        elif hvac_mode == HVACMode.HEAT: # 예약모드
+        elif hvac_mode == HVACMode.HEAT:  # 예약모드
             if not self.is_boiler_on:
                 self.command(BCM_REG_ONOFF, 1)
                 time.sleep(1)
@@ -501,12 +752,12 @@ class Bcm300(SihasEntity, ClimateEntity):
                 self.command(BCM_REG_OUTMODE, 0)
                 time.sleep(1)
             self.command(BCM_REG_TIMERMODE, 1)
-        elif hvac_mode == HVACMode.FAN_ONLY: # 외출 모드
+        elif hvac_mode == HVACMode.FAN_ONLY:  # 외출 모드
             if not self.is_boiler_on:
                 self.command(BCM_REG_ONOFF, 1)
                 time.sleep(1)
             self.command(BCM_REG_OUTMODE, 1)
-        elif hvac_mode == HVACMode.OFF: # 끄기
+        elif hvac_mode == HVACMode.OFF:  # 끄기
             if self.is_boiler_on:
                 self.command(BCM_REG_ONOFF, 0)
 
@@ -515,7 +766,11 @@ class Bcm300(SihasEntity, ClimateEntity):
 
         assert self.opmode != None
         self.command(
-            BCM_REG_ROOMSETPT if (self.opmode.heatMode == BcmHeatMode.Room) else BCM_REG_ONDOLSETPT,
+            (
+                BCM_REG_ROOMSETPT
+                if (self.opmode.heatMode == BcmHeatMode.Room)
+                else BCM_REG_ONDOLSETPT
+            ),
             math.floor(tmp),
         )
 

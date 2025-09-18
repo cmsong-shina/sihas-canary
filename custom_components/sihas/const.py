@@ -1,4 +1,5 @@
 """Constants for the sihas integration."""
+
 from typing import Final, List, final
 
 import homeassistant.helpers.config_validation as cv
@@ -38,6 +39,8 @@ DEVICE_TYPE: Final = {
     "WCM": 25,
     "SHB": 26,
     "SQM": 27,
+    "RCM": 28,
+    "HQM": 29,
 }
 
 SUPPORT_DEVICE: Final[List[str]] = [
@@ -54,6 +57,8 @@ SUPPORT_DEVICE: Final[List[str]] = [
     "SQM",
     "STM",
     "TCM",
+    "RCM",
+    "HQM",
 ]
 
 DEFAULT_TIMEOUT: Final = 0.5

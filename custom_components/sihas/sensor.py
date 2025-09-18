@@ -37,7 +37,7 @@ from .const import (
     ICON_POWER_METER,
     SIHAS_PLATFORM_SCHEMA,
 )
-from .sihas_base import SihasProxy, SihasSubEntity
+from .sihas_base import SihasEntity, SihasProxy, SihasSubEntity
 from .util import register_put_u32
 
 SCAN_INTERVAL = timedelta(seconds=10)
@@ -197,23 +197,34 @@ PMM_GENERIC_SENSOR_DEFINE: Final = {
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if entry.data[CONF_TYPE] == "PMM":
-        pmm = Pmm300(
-            ip=entry.data[CONF_IP],
-            mac=entry.data[CONF_MAC],
-            device_type=entry.data[CONF_TYPE],
-            config=entry.data[CONF_CFG],
-        )
-        async_add_entities(pmm.get_sub_entities())
+    match entry.data[CONF_TYPE]:
+        case "PMM":
+            pmm = Pmm300(
+                ip=entry.data[CONF_IP],
+                mac=entry.data[CONF_MAC],
+                device_type=entry.data[CONF_TYPE],
+                config=entry.data[CONF_CFG],
+            )
+            async_add_entities(pmm.get_sub_entities())
 
-    elif entry.data[CONF_TYPE] == "AQM":
-        aqm = Aqm300(
-            ip=entry.data[CONF_IP],
-            mac=entry.data[CONF_MAC],
-            device_type=entry.data[CONF_TYPE],
-            config=entry.data[CONF_CFG],
-        )
-        async_add_entities(aqm.get_sub_entities())
+        case "AQM":
+            aqm = Aqm300(
+                ip=entry.data[CONF_IP],
+                mac=entry.data[CONF_MAC],
+                device_type=entry.data[CONF_TYPE],
+                config=entry.data[CONF_CFG],
+            )
+            async_add_entities(aqm.get_sub_entities())
+
+        case "HQM":
+            async_add_entities([
+                HqmHumidSensor(
+                    ip=entry.data[CONF_IP],
+                    mac=entry.data[CONF_MAC],
+                    device_type=entry.data[CONF_TYPE],
+                    config=entry.data[CONF_CFG],
+                )
+            ])
 
 
 class Pmm300(SihasProxy):
@@ -328,3 +339,29 @@ class AqmVirtualSensor(SihasSubEntity, SensorEntity):
         self._proxy.update()
         self._attr_native_value = self.value_handler(self._proxy.registers)
         self._attr_available = self._proxy._attr_available
+
+class HqmHumidSensor(SihasEntity, SensorEntity):
+    
+    def __init__(
+        self,
+        ip: str,
+        mac: str,
+        device_type: str,
+        config: int,
+        name: Optional[str] = None,
+    ):
+        super().__init__(
+            ip=ip,
+            mac=mac,
+            device_type=device_type,
+            config=config,
+            name=f"{name} 습도",
+        )
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_device_class = SensorDeviceClass.HUMIDITY
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    def update(self):
+        self.update()
+        if regs := self.poll():            
+            self._attr_native_value = regs[7]

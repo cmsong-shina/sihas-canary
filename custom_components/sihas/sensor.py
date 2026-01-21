@@ -130,7 +130,7 @@ def last_month_value_handler(registers: List[int]) -> float:
 PMM_GENERIC_SENSOR_DEFINE: Final = {
     PMM_KEY_POWER: PmmConfig(
         nuom=UnitOfPower.WATT,
-        value_handler=lambda r: r[2],
+        value_handler=lambda r: (r[37] << 16) | r[2],
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         sub_id=PMM_KEY_POWER,

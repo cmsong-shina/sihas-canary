@@ -1,4 +1,5 @@
 """Platform for light integration."""
+
 from __future__ import annotations
 from datetime import timedelta
 
@@ -84,7 +85,9 @@ class StmSbm300(SihasProxy):
 class StmSbmVirtualLight(SihasSubEntity, LightEntity):
     _attr_icon = ICON_LIGHT_BULB
 
-    def __init__(self, stbm: StmSbm300, number_of_switch: int, name: Optional[str] = None):
+    def __init__(
+        self, stbm: StmSbm300, number_of_switch: int, name: Optional[str] = None
+    ):
         super().__init__(stbm)
 
         uid = f"{stbm.device_type}-{stbm.mac}-{number_of_switch}"
@@ -96,6 +99,8 @@ class StmSbmVirtualLight(SihasSubEntity, LightEntity):
         self._attr_unique_id = uid
         self._attr_name = f"{name} #{number_of_switch + 1}" if name else uid
         self._attr_unique_id = uid
+        self._attr_supported_color_modes = [ColorMode.ONOFF]
+        self._attr_color_mode = ColorMode.ONOFF
 
     @property
     def is_on(self):
@@ -137,7 +142,7 @@ class Sdm300(SihasProxy):
         self.name = name
 
     def get_sub_entities(self) -> List[Entity]:
-        num_of_switches = self.config & 0x07 # Adjustment SDM CG type (start from 9)
+        num_of_switches = self.config & 0x07  # Adjustment SDM CG type (start from 9)
         return [SdmVirtualLight(self, i, self.name) for i in range(0, num_of_switches)]
 
 
@@ -178,9 +183,7 @@ class SdmVirtualLight(SihasSubEntity, LightEntity):
         self._attr_is_on = self._proxy.registers[self.onoff_reg_idx]
 
         bright = normalize(
-            (1, 100),
-            (0, 255),
-            self._proxy.registers[self.brightness_reg_idx]
+            (1, 100), (0, 255), self._proxy.registers[self.brightness_reg_idx]
         )
         self._attr_brightness = bright
 
@@ -188,19 +191,14 @@ class SdmVirtualLight(SihasSubEntity, LightEntity):
 
     def turn_on(self, **kwargs):
         if ATTR_BRIGHTNESS in kwargs:
-            bright = normalize(
-                (0, 255),
-                (1, 100),
-                kwargs.get(ATTR_BRIGHTNESS)
-            )
+            bright = normalize((0, 255), (1, 100), kwargs.get(ATTR_BRIGHTNESS))
 
             self._set_brightness(bright)
         else:
             self._set_brightness(101)
 
     def turn_off(self, **kwargs):
-            self._set_brightness(0)
+        self._set_brightness(0)
 
     def _set_brightness(self, brightness: int):
         self._proxy.command(self.brightness_reg_idx, brightness)
-

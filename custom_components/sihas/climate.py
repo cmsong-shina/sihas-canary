@@ -620,7 +620,7 @@ class Acm300(SihasEntity, ClimateEntity):
             )
             self._attr_swing_mode = Acm300.SWING_MODE_TABLE[regs[Acm300.REG_SWING]]
             self._attr_fan_mode = Acm300.FAN_TABLE[regs[Acm300.REG_FAN]]
-            if self.config == 1:
+            if self.config >= 1:
                 self._attr_current_temperature = regs[Acm300.REG_AC_TEMP] / 10
             self._attr_target_temperature = regs[Acm300.REG_SET_POINT]
 

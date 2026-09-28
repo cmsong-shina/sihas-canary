@@ -54,7 +54,8 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
     },
     "temperature": {
         "uom": UnitOfTemperature.CELSIUS,
-        "value_handler": lambda r: round(r[0] / 10, 1),
+        # 온도 레지스터를 10배의 고정소수점 i16으로 해석한다.
+        "value_handler": lambda r: round((r[0] - 0x10000 if r[0] & 0x8000 else r[0]) / 10, 1),
         "device_class": SensorDeviceClass.TEMPERATURE,
         "state_class": SensorStateClass.MEASUREMENT,
         "sub_id": "temperature",

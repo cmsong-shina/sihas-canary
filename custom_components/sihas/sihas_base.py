@@ -55,6 +55,16 @@ class SihasBase:
         self._attr_available = False
         self._poll_failure_count = 0
 
+    def _mark_unavailable(self, reason: str) -> None:
+        if self._attr_available:
+            self._attr_available = False
+            _LOGGER.warning(
+                "device set to not available: %s <%s, %s>",
+                reason,
+                self.device_type,
+                self.ip,
+            )
+
     def poll(self) -> Optional[List[int]]:
         """Read Holding Registers and return registers.
 
@@ -70,18 +80,30 @@ class SihasBase:
             req = pb.poll()
             resp = send(req, self.ip, retry=3)
             regs = pb.extract_registers(resp)
-            assert len(regs) == REG_LENG
+            if len(regs) != REG_LENG:
+                raise ValueError(
+                    f"expected {REG_LENG} registers, received {len(regs)}"
+                )
             self._poll_failure_count = 0
             self._attr_available = True
             return regs
 
-        except ModbusNotEnabledError:
-            _LOGGER.warning("failed to update: modbus not enabled <%s, %s>", self.device_type, self.ip)
+        except ModbusNotEnabledError as err:
+            failure_reason = str(err)
+            _LOGGER.warning(
+                "failed to update: modbus not enabled <%s, %s>",
+                self.device_type,
+                self.ip,
+            )
 
         except socket.timeout:
-            _LOGGER.debug("failed to update: timeout <%s, %s>", self.device_type, self.ip)
+            failure_reason = "socket timeout"
+            _LOGGER.debug(
+                "failed to update: timeout <%s, %s>", self.device_type, self.ip
+            )
 
         except Exception as err:
+            failure_reason = f"{type(err).__name__}: {err}"
             _LOGGER.error(
                 "failed to update: unhandled exception: %s <%s, %s>",
                 err,
@@ -90,9 +112,11 @@ class SihasBase:
             )
 
         self._poll_failure_count += 1
-        if self._poll_failure_count >= _POLL_FAILURE_THRESHOLD and self._attr_available:
-            self._attr_available = False
-            _LOGGER.info(f"device set to not available <{self.device_type, self.ip}>")
+        if self._poll_failure_count >= _POLL_FAILURE_THRESHOLD:
+            self._mark_unavailable(
+                f"after {self._poll_failure_count} consecutive poll failures; "
+                f"last failure: {failure_reason}"
+            )
         return None
 
     def command(self, idx: int, val: int, opt: CommandOption = {}) -> bool:
@@ -101,6 +125,7 @@ class SihasBase:
         }
 
         opt = default_opt | opt
+        failure_reason = "empty response"
 
         try:
             req = pb.command(idx, val)
@@ -108,23 +133,33 @@ class SihasBase:
                 self._poll_failure_count = 0
                 self._attr_available = True
                 return True
-
-        except ModbusNotEnabledError:
             _LOGGER.warning(
-                "failed to command: modbus not enabled <%s, %s>", self.device_type, self.ip
+                "failed to command: empty response <%s, %s>",
+                self.device_type,
+                self.ip,
+            )
+
+        except ModbusNotEnabledError as err:
+            failure_reason = str(err)
+            _LOGGER.warning(
+                "failed to command: modbus not enabled <%s, %s>",
+                self.device_type,
+                self.ip,
             )
 
         except socket.timeout:
+            failure_reason = "socket timeout"
             _LOGGER.info("failed to command: timeout <%s, %s>", self.device_type, self.ip)
 
         except Exception as err:
+            failure_reason = f"{type(err).__name__}: {err}"
             _LOGGER.warning(
                 "failed to command: unhandled exception: %s <%s, %s>",
                 err,
                 self.device_type,
                 self.ip,
             )
-        self._attr_available = False
+        self._mark_unavailable(f"command failed: {failure_reason}")
         return False
 
 

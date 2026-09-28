@@ -11,16 +11,15 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_BILLION,
-    CONCENTRATION_PARTS_PER_MILLION,
     LIGHT_LUX,
     PERCENTAGE,
+    UnitOfDensity,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
+    UnitOfRatio,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
@@ -68,28 +67,28 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
         "sub_id": "illuminance",
     },
     "co2": {
-        "uom": CONCENTRATION_PARTS_PER_MILLION,
+        "uom": UnitOfRatio.PARTS_PER_MILLION,
         "value_handler": lambda r: r[2],
         "device_class": SensorDeviceClass.CO2,
         "state_class": SensorStateClass.MEASUREMENT,
         "sub_id": "co2",
     },
     "pm25": {
-        "uom": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+        "uom": UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
         "value_handler": lambda r: r[3],
         "device_class": SensorDeviceClass.PM25,
         "state_class": SensorStateClass.MEASUREMENT,
         "sub_id": "pm25",
     },
     "pm10": {
-        "uom": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+        "uom": UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
         "value_handler": lambda r: r[4],
         "device_class": SensorDeviceClass.PM10,
         "state_class": SensorStateClass.MEASUREMENT,
         "sub_id": "pm10",
     },
     "tvoc": {
-        "uom": CONCENTRATION_PARTS_PER_BILLION,
+        "uom": UnitOfRatio.PARTS_PER_BILLION,
         "value_handler": lambda r: r[5],
         "device_class": None,
         "state_class": SensorStateClass.MEASUREMENT,

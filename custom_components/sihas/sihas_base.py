@@ -14,6 +14,7 @@ from .sender import send
 from .util import Debouncer
 
 _LOGGER = logging.getLogger(__name__)
+_POLL_FAILURE_THRESHOLD = 3
 
 
 class CommandOption(TypedDict):
@@ -52,6 +53,7 @@ class SihasBase:
         self.config = config
 
         self._attr_available = False
+        self._poll_failure_count = 0
 
     def poll(self) -> Optional[List[int]]:
         """Read Holding Registers and return registers.
@@ -68,8 +70,9 @@ class SihasBase:
             req = pb.poll()
             resp = send(req, self.ip, retry=3)
             regs = pb.extract_registers(resp)
-            self._attr_available = True
             assert len(regs) == REG_LENG
+            self._poll_failure_count = 0
+            self._attr_available = True
             return regs
 
         except ModbusNotEnabledError:
@@ -86,8 +89,8 @@ class SihasBase:
                 self.ip,
             )
 
-        # if exception catched
-        if self._attr_available:
+        self._poll_failure_count += 1
+        if self._poll_failure_count >= _POLL_FAILURE_THRESHOLD and self._attr_available:
             self._attr_available = False
             _LOGGER.info(f"device set to not available <{self.device_type, self.ip}>")
         return None
@@ -102,6 +105,7 @@ class SihasBase:
         try:
             req = pb.command(idx, val)
             if send(req, self.ip, retry=opt["retry"]):
+                self._poll_failure_count = 0
                 self._attr_available = True
                 return True
 

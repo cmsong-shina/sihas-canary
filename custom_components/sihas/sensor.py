@@ -27,6 +27,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .bcm import BcmCoordinator, BcmEntity, get_coordinator
 from .const import (
     CONF_CFG,
     CONF_IP,
@@ -211,6 +212,9 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     match entry.data[CONF_TYPE]:
+        case "BCM":
+            async_add_entities([BcmCurrentTemperature(get_coordinator(hass, entry))])
+
         case "PMM":
             pmm = Pmm300(
                 ip=entry.data[CONF_IP],
@@ -240,6 +244,20 @@ async def async_setup_entry(
                     )
                 ]
             )
+
+
+class BcmCurrentTemperature(BcmEntity, SensorEntity):
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 1
+
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "current_temperature")
+
+    @property
+    def native_value(self) -> float:
+        return self.coordinator.data.current_temperature
 
 
 class Pmm300(SihasProxy):

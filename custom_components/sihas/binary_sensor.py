@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Optional
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -10,7 +9,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .climate import Acm300
 
 from .const import (
     CONF_CFG,
@@ -27,7 +25,6 @@ SCAN_INTERVAL = timedelta(seconds=10)
 
 PARALLEL_UPDATES = DEFAULT_PARALLEL_UPDATES
 PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 
 async def async_setup_entry(
@@ -53,7 +50,7 @@ class AcmVibrationSensor(SihasEntity, BinarySensorEntity):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,

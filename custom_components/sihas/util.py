@@ -1,6 +1,5 @@
+from collections.abc import Callable
 from datetime import datetime
-from logging import StringTemplateStyle
-from typing import Callable, Dict
 
 from .const import DEFAULT_DEBOUNCE_DURATION
 
@@ -56,7 +55,7 @@ class MacConv:
         return s.replace(":", "")
 
 
-def parse_scan_message(msg: str) -> Dict:
+def parse_scan_message(msg: str) -> dict:
     type = msg[6:9]
     version = msg[11:16]
     mac = msg[21:38]

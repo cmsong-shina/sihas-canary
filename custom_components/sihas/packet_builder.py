@@ -1,5 +1,5 @@
 import logging
-from typing import Final, List
+from typing import Final
 
 from .const import ENDIAN
 from .errors import ModbusNotEnabledError, PacketSizeError
@@ -71,7 +71,7 @@ class packet_builder:
         return h
 
     @staticmethod
-    def extract_registers(p: bytes) -> List[int]:
+    def extract_registers(p: bytes) -> list[int]:
         """
         Raise
         -----
@@ -86,12 +86,12 @@ class packet_builder:
 
         def isModbusEnabled(p: bytes) -> bool:
             """If Function Code of response packet returned with bitwised OR by 0x08, NAK"""
-            return not (p[POS_FUNCTION_CODE] & 0x08 != 0)
+            return p[POS_FUNCTION_CODE] & 8 == 0
 
         def hasValidSize(p: bytes) -> bool:
             return len(p) == POLL_RESPONSE_LENGTH
 
-        def bytesToU16Arry(p: bytes) -> List[int]:
+        def bytesToU16Arry(p: bytes) -> list[int]:
             registers = list()
             for i in range(64):
                 offset = 9 + i * 2

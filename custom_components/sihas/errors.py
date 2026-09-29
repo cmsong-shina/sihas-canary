@@ -17,7 +17,7 @@ class ModbusNotEnabledError(Exception):
 
     def __str__(self) -> str:
         detail = f": {self._device}" if self._device else ""
-        return f"modbus does not enabled check in the app about device" + detail
+        return "modbus does not enabled check in the app about device" + detail
 
 
 class InitializingError(Exception):

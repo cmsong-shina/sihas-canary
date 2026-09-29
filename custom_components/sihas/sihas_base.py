@@ -1,7 +1,6 @@
 import logging
-import socket
 from abc import ABCMeta
-from typing import List, Optional, TypedDict
+from typing import TypedDict
 
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import DeviceInfo, Entity
@@ -65,7 +64,7 @@ class SihasBase:
                 self.ip,
             )
 
-    def poll(self) -> Optional[List[int]]:
+    def poll(self) -> list[int] | None:
         """Read Holding Registers and return registers.
 
         If failed return None. So use this function with walrus operator, like below.
@@ -81,9 +80,7 @@ class SihasBase:
             resp = send(req, self.ip, retry=3)
             regs = pb.extract_registers(resp)
             if len(regs) != REG_LENG:
-                raise ValueError(
-                    f"expected {REG_LENG} registers, received {len(regs)}"
-                )
+                raise ValueError(f"expected {REG_LENG} registers, received {len(regs)}")
             self._poll_failure_count = 0
             self._attr_available = True
             return regs
@@ -96,7 +93,7 @@ class SihasBase:
                 self.ip,
             )
 
-        except socket.timeout:
+        except TimeoutError:
             failure_reason = "socket timeout"
             _LOGGER.debug(
                 "failed to update: timeout <%s, %s>", self.device_type, self.ip
@@ -119,7 +116,10 @@ class SihasBase:
             )
         return None
 
-    def command(self, idx: int, val: int, opt: CommandOption = {}) -> bool:
+    def command(self, idx: int, val: int, opt: CommandOption | None = None) -> bool:
+        if opt is None:
+            opt = {}
+
         default_opt: CommandOption = {
             "retry": 3,
         }
@@ -147,9 +147,11 @@ class SihasBase:
                 self.ip,
             )
 
-        except socket.timeout:
+        except TimeoutError:
             failure_reason = "socket timeout"
-            _LOGGER.info("failed to command: timeout <%s, %s>", self.device_type, self.ip)
+            _LOGGER.info(
+                "failed to command: timeout <%s, %s>", self.device_type, self.ip
+            )
 
         except Exception as err:
             failure_reason = f"{type(err).__name__}: {err}"
@@ -180,8 +182,8 @@ class SihasEntity(SihasBase, Entity):
         mac: str,
         device_type: str,
         config: int,
-        uid: Optional[str] = None,
-        name: Optional[str] = None,
+        uid: str | None = None,
+        name: str | None = None,
     ) -> None:
         super().__init__(
             ip,
@@ -209,7 +211,9 @@ class SihasEntity(SihasBase, Entity):
         }
 
     def update(self):
-        raise NotImplementedError(f"update method does not implemented for {self.device_type}")
+        raise NotImplementedError(
+            f"update method does not implemented for {self.device_type}"
+        )
 
 
 class SihasProxy(SihasBase):
@@ -265,7 +269,7 @@ class SihasProxy(SihasBase):
         super().command(idx, val)
         self._internal_update()
 
-    def get_sub_entities(self) -> List[Entity]:
+    def get_sub_entities(self) -> list[Entity]:
         """Generate sub-instances"""
         raise NotImplementedError()
 

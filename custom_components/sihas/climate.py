@@ -2,29 +2,28 @@
 
 from __future__ import annotations
 
-from atexit import register
 import logging
 import math
+import time
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, IntEnum
-import time
-from typing import List, Optional, cast, Final
+from typing import Final, cast
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
-    HVACAction,
-    HVACMode,
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
     FAN_MEDIUM,
-    ClimateEntityFeature,
     SWING_BOTH,
     SWING_HORIZONTAL,
     SWING_OFF,
     SWING_VERTICAL,
+    ClimateEntityFeature,
+    HVACAction,
+    HVACMode,
 )
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -161,7 +160,6 @@ async def async_setup_entry(
                 ),
             ],
         )
-    return
 
 
 HCM_SUPPORTED_FEATURES: Final = (
@@ -178,7 +176,7 @@ class HcmHvm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         super().__init__(
             ip,
@@ -188,7 +186,7 @@ class HcmHvm300(SihasProxy):
         )
         self.name = name
 
-    def get_sub_entities(self) -> List[Entity]:
+    def get_sub_entities(self) -> list[Entity]:
         req = pb.poll()
         resp = send(req, self.ip)
         self.registers = pb.extract_registers(resp)
@@ -200,7 +198,7 @@ class HcmHvm300(SihasProxy):
         number_of_room = self.registers[reg_num_rooms]
         return [
             HcmHvmVirtualThermostat(self, i, self.name)
-            for i in range(0, number_of_room)
+            for i in range(number_of_room)
         ]
 
 
@@ -215,7 +213,7 @@ class HcmHvmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
     def __init__(
-        self, proxy: HcmHvm300, number_of_room: int, name: Optional[str] = None
+        self, proxy: HcmHvm300, number_of_room: int, name: str | None = None
     ) -> None:
         super().__init__(proxy)
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
@@ -309,7 +307,7 @@ class Hqm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         super().__init__(
             ip,
@@ -319,7 +317,7 @@ class Hqm300(SihasProxy):
         )
         self.name = name
 
-    def get_sub_entities(self) -> List[Entity]:
+    def get_sub_entities(self) -> list[Entity]:
         req = pb.poll()
         resp = send(req, self.ip, retry=3)
         self.registers = pb.extract_registers(resp)
@@ -332,7 +330,7 @@ class Hqm300(SihasProxy):
             number_of_room = self.registers[HQM_REG_NUMBER_OF_ROOMS]
             return [
                 HqmVirtualThermostat(self, i, self.name)
-                for i in range(0, number_of_room)
+                for i in range(number_of_room)
             ]
 
 
@@ -347,7 +345,7 @@ class HqmVirtualThermostat(SihasSubEntity, ClimateEntity):
     _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
     def __init__(
-        self, proxy: Hqm300, number_of_room: int, name: Optional[str] = None
+        self, proxy: Hqm300, number_of_room: int, name: str | None = None
     ) -> None:
         super().__init__(proxy)
         uid = f"{proxy.device_type}-{proxy.mac}-{number_of_room}"
@@ -426,7 +424,7 @@ class HqmStandaloneThermostat(SihasSubEntity, ClimateEntity):
     _attr_target_temperature_step = 0.1
     _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
 
-    def __init__(self, proxy: Hqm300, name: Optional[str] = None) -> None:
+    def __init__(self, proxy: Hqm300, name: str | None = None) -> None:
         super().__init__(proxy)
         uid = f"{proxy.device_type}-{proxy.mac}"
 
@@ -552,7 +550,7 @@ class Acm300(SihasEntity, ClimateEntity):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,
@@ -716,11 +714,11 @@ class Bcm300(SihasEntity, ClimateEntity):
             name=name,
         )
 
-        self.opmode: Optional[BcmOpMode] = None
-        self.manufacturer: Optional[BoilerManufactuer] = None
-        self.is_boiler_on: Optional[bool] = None
-        self.is_outmode: Optional[bool] = None
-        self.is_timermode: Optional[bool] = None
+        self.opmode: BcmOpMode | None = None
+        self.manufacturer: BoilerManufactuer | None = None
+        self.is_boiler_on: bool | None = None
+        self.is_outmode: bool | None = None
+        self.is_timermode: bool | None = None
 
     def set_hvac_mode(self, hvac_mode: str):
         """
@@ -774,8 +772,8 @@ class Bcm300(SihasEntity, ClimateEntity):
             self._attr_hvac_mode = self._resolve_hvac_mode(regs)
             self._attr_hvac_action = self._resolve_hvac_action(regs)
 
-            setpt: Optional[int] = None  # set point
-            curpt: Optional[int] = None  # current point
+            setpt: int | None = None  # set point
+            curpt: int | None = None  # current point
 
             if self.opmode.heatMode == BcmHeatMode.Room:
                 setpt = regs[BCM_REG_ROOMSETPT]
@@ -811,7 +809,7 @@ class Bcm300(SihasEntity, ClimateEntity):
         else:
             return HVACAction.HEATING
 
-    def _parse_oper_mode(self, regs: List[int]) -> BcmOpMode:
+    def _parse_oper_mode(self, regs: list[int]) -> BcmOpMode:
         r"""보일러 운전모드 파싱
         regs[_BCMOPERMODE] = 0b_0000_0000
                                        \\\_온수 ON/OFF Flag

@@ -1,8 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import timedelta
-from typing import Callable, Dict, List, Optional
+from typing import Final
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -25,7 +26,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from typing_extensions import Final
 
 from .const import (
     CONF_CFG,
@@ -55,7 +55,9 @@ AQM_GENERIC_SENSOR_DEFINE: Final = {
     "temperature": {
         "uom": UnitOfTemperature.CELSIUS,
         # 온도 레지스터를 10배의 고정소수점 i16으로 해석한다.
-        "value_handler": lambda r: round((r[0] - 0x10000 if r[0] & 0x8000 else r[0]) / 10, 1),
+        "value_handler": lambda r: round(
+            (r[0] - 0x10000 if r[0] & 0x8000 else r[0]) / 10, 1
+        ),
         "device_class": SensorDeviceClass.TEMPERATURE,
         "state_class": SensorStateClass.MEASUREMENT,
         "sub_id": "temperature",
@@ -112,28 +114,31 @@ PMM_MAG_TABLE = {0: 10, 1: 100, 2: 1000}
 @dataclass
 class PmmConfig:
     nuom: str
-    value_handler: Callable[[List[int]], int | float]
+    value_handler: Callable[[list[int]], int | float]
     device_class: SensorDeviceClass
-    state_class: str
+    state_class: SensorStateClass
     sub_id: str
+
 
 def as_killo_watt(watt: int) -> float:
     return round(watt / 1000, 2)
 
-def this_month_value_handler(registers: List[int]) -> float:
+
+def this_month_value_handler(registers: list[int]) -> float:
     try:
         mag = PMM_MAG_TABLE[registers[31]]
         return as_killo_watt(registers[10] * mag + registers[16])
     except IndexError as e:
-        raise ValueError(f"PMM-300 월간 사용량 배율을 해석하지 못했습니다.") from e
+        raise ValueError("PMM-300 월간 사용량 배율을 해석하지 못했습니다.") from e
 
 
-def last_month_value_handler(registers: List[int]) -> float:
+def last_month_value_handler(registers: list[int]) -> float:
     try:
         mag = PMM_MAG_TABLE[registers[31]]
         return as_killo_watt(registers[11] * mag)
     except IndexError as e:
-        raise ValueError(f"PMM-300 월간 사용량 배율을 해석하지 못했습니다.") from e
+        raise ValueError("PMM-300 월간 사용량 배율을 해석하지 못했습니다.") from e
+
 
 PMM_GENERIC_SENSOR_DEFINE: Final = {
     PMM_KEY_POWER: PmmConfig(
@@ -225,14 +230,16 @@ async def async_setup_entry(
             async_add_entities(aqm.get_sub_entities())
 
         case "HQM":
-            async_add_entities([
-                HqmHumidSensor(
-                    ip=entry.data[CONF_IP],
-                    mac=entry.data[CONF_MAC],
-                    device_type=entry.data[CONF_TYPE],
-                    config=entry.data[CONF_CFG],
-                )
-            ])
+            async_add_entities(
+                [
+                    HqmHumidSensor(
+                        ip=entry.data[CONF_IP],
+                        mac=entry.data[CONF_MAC],
+                        device_type=entry.data[CONF_TYPE],
+                        config=entry.data[CONF_CFG],
+                    )
+                ]
+            )
 
 
 class Pmm300(SihasProxy):
@@ -242,7 +249,7 @@ class Pmm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,
@@ -252,13 +259,17 @@ class Pmm300(SihasProxy):
         )
         self.name = name
 
-    def get_sub_entities(self) -> List[Entity]:
+    def get_sub_entities(self) -> list[Entity]:
         return [
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_POWER]),
-            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_MONTH_ENERGY]),
+            PmmVirtualSensor(
+                self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_MONTH_ENERGY]
+            ),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_THIS_DAY_ENERGY]),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_TOTAL]),
-            PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_LAST_MONTH_ENERGY]),
+            PmmVirtualSensor(
+                self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_LAST_MONTH_ENERGY]
+            ),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_VOLTAGE]),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_CURRENT]),
             PmmVirtualSensor(self, PMM_GENERIC_SENSOR_DEFINE[PMM_KEY_POWER_FACTOR]),
@@ -275,7 +286,9 @@ class PmmVirtualSensor(SihasSubEntity, SensorEntity):
         self._attr_available = self._proxy._attr_available
         self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf.sub_id}"
         self._attr_native_unit_of_measurement = conf.nuom
-        self._attr_name = f"{proxy.name} #{conf.sub_id}" if proxy.name else self._attr_unique_id
+        self._attr_name = (
+            f"{proxy.name} #{conf.sub_id}" if proxy.name else self._attr_unique_id
+        )
         self._attr_device_class = conf.device_class
         self._attr_state_class = conf.state_class
 
@@ -307,7 +320,7 @@ class Aqm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,
@@ -317,7 +330,7 @@ class Aqm300(SihasProxy):
         )
         self.name = name
 
-    def get_sub_entities(self) -> List[Entity]:
+    def get_sub_entities(self) -> list[Entity]:
         return [
             AqmVirtualSensor(self, AQM_GENERIC_SENSOR_DEFINE["co2"]),
             AqmVirtualSensor(self, AQM_GENERIC_SENSOR_DEFINE["pm25"]),
@@ -330,14 +343,16 @@ class Aqm300(SihasProxy):
 
 
 class AqmVirtualSensor(SihasSubEntity, SensorEntity):
-    def __init__(self, proxy: Aqm300, conf: Dict) -> None:
+    def __init__(self, proxy: Aqm300, conf: dict) -> None:
         super().__init__(proxy)
 
         self._proxy = proxy
         self._attr_available = self._proxy._attr_available
         self._attr_unique_id = f"{proxy.device_type}-{proxy.mac}-{conf['device_class']}"
         self._attr_native_unit_of_measurement = conf["uom"]
-        self._attr_name = f"{proxy.name} #{conf['sub_id']}" if proxy.name else self._attr_unique_id
+        self._attr_name = (
+            f"{proxy.name} #{conf['sub_id']}" if proxy.name else self._attr_unique_id
+        )
         self._attr_device_class = conf["device_class"]
         self._attr_state_class = conf["state_class"]
 
@@ -348,15 +363,15 @@ class AqmVirtualSensor(SihasSubEntity, SensorEntity):
         self._attr_native_value = self.value_handler(self._proxy.registers)
         self._attr_available = self._proxy._attr_available
 
+
 class HqmHumidSensor(SihasEntity, SensorEntity):
-    
     def __init__(
         self,
         ip: str,
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,
@@ -370,5 +385,5 @@ class HqmHumidSensor(SihasEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def update(self):
-        if regs := self.poll():            
+        if regs := self.poll():
             self._attr_native_value = regs[7]

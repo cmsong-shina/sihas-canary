@@ -3,32 +3,27 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.helpers.service_info import dhcp, zeroconf
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.service_info import dhcp, zeroconf
 
 from .const import (
     CONF_CFG,
-    CONF_HOST,
-    CONF_HOSTNAME,
     CONF_IP,
     CONF_MAC,
     CONF_NAME,
-    CONF_PROP,
     CONF_TYPE,
     DOMAIN,
     MAC_OUI,
     SUPPORT_DEVICE,
 )
 from .packet_builder import packet_builder as pb
-from .sender import scan, send
+from .sender import scan
 from .sihas_base import SihasBase
 from .util import MacConv, parse_scan_message
 
@@ -42,7 +37,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self.sihas: SihasBase
-        self.data: Dict[str, Any] = {}
+        self.data: dict[str, Any] = {}
 
     async def async_step_zeroconf(self, discovery_info: zeroconf.ZeroconfServiceInfo) -> ConfigFlowResult:
         _LOGGER.debug("device found by zeroconf: %s", discovery_info)
@@ -58,7 +53,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # }
 
         # ['sihas', 'acm', '0a2998']
-        hostname_parts: List[str] = discovery_info.hostname.split(".")[0].split("_")
+        hostname_parts: list[str] = discovery_info.hostname.split(".")[0].split("_")
 
         self.data[CONF_IP] = discovery_info.host
         self.data[CONF_MAC] = MacConv.insert_colon(MAC_OUI + hostname_parts[2]).lower()

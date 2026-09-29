@@ -1,9 +1,9 @@
 """Platform for light integration."""
 
 from __future__ import annotations
+
 from datetime import timedelta
 
-from typing import List, Optional
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ColorMode,
@@ -13,7 +13,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
     CONF_CFG,
@@ -68,7 +67,7 @@ class StmSbm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,
@@ -78,16 +77,14 @@ class StmSbm300(SihasProxy):
         )
         self.name = name
 
-    def get_sub_entities(self) -> List[Entity]:
-        return [StmSbmVirtualLight(self, i, self.name) for i in range(0, self.config)]
+    def get_sub_entities(self) -> list[Entity]:
+        return [StmSbmVirtualLight(self, i, self.name) for i in range(self.config)]
 
 
 class StmSbmVirtualLight(SihasSubEntity, LightEntity):
     _attr_icon = ICON_LIGHT_BULB
 
-    def __init__(
-        self, stbm: StmSbm300, number_of_switch: int, name: Optional[str] = None
-    ):
+    def __init__(self, stbm: StmSbm300, number_of_switch: int, name: str | None = None):
         super().__init__(stbm)
 
         uid = f"{stbm.device_type}-{stbm.mac}-{number_of_switch}"
@@ -99,7 +96,7 @@ class StmSbmVirtualLight(SihasSubEntity, LightEntity):
         self._attr_unique_id = uid
         self._attr_name = f"{name} #{number_of_switch + 1}" if name else uid
         self._attr_unique_id = uid
-        self._attr_supported_color_modes = [ColorMode.ONOFF]
+        self._attr_supported_color_modes = {ColorMode.ONOFF}
         self._attr_color_mode = ColorMode.ONOFF
 
     @property
@@ -131,7 +128,7 @@ class Sdm300(SihasProxy):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,
@@ -141,15 +138,15 @@ class Sdm300(SihasProxy):
         )
         self.name = name
 
-    def get_sub_entities(self) -> List[Entity]:
+    def get_sub_entities(self) -> list[Entity]:
         num_of_switches = self.config & 0x07  # Adjustment SDM CG type (start from 9)
-        return [SdmVirtualLight(self, i, self.name) for i in range(0, num_of_switches)]
+        return [SdmVirtualLight(self, i, self.name) for i in range(num_of_switches)]
 
 
 class SdmVirtualLight(SihasSubEntity, LightEntity):
     _attr_icon = ICON_LIGHT_BULB
 
-    def __init__(self, stbm: Sdm300, number_of_switch: int, name: Optional[str] = None):
+    def __init__(self, stbm: Sdm300, number_of_switch: int, name: str | None = None):
         super().__init__(stbm)
 
         uid = f"{stbm.device_type}-{stbm.mac}-{number_of_switch}"
@@ -180,7 +177,7 @@ class SdmVirtualLight(SihasSubEntity, LightEntity):
     def update(self):
         self._proxy.update()
 
-        self._attr_is_on = self._proxy.registers[self.onoff_reg_idx]
+        self._attr_is_on = bool(self._proxy.registers[self.onoff_reg_idx])
 
         bright = normalize(
             (1, 100), (0, 255), self._proxy.registers[self.brightness_reg_idx]

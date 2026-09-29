@@ -3,18 +3,16 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from typing import Final
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
-    CoverEntityFeature,
     CoverEntity,
+    CoverEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from typing_extensions import Final
-
-from .sihas_base import SihasEntity
 
 from .const import (
     CONF_CFG,
@@ -26,6 +24,7 @@ from .const import (
     ICON_CURTAIN,
     SIHAS_PLATFORM_SCHEMA,
 )
+from .sihas_base import SihasEntity
 
 SCAN_INTERVAL: Final = timedelta(seconds=5)
 
@@ -50,7 +49,6 @@ async def async_setup_entry(
                 ),
             ],
         )
-    return
 
 
 REG_RBM_STAT_CMD: Final = 0  # 상태 제어 레지스터     (0=닫힘, 1=열림, 2=정지)

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Optional
+from typing import Final
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from typing_extensions import Final
 
 from .const import (
     CONF_CFG,
@@ -63,7 +62,7 @@ class Ccm300(SihasEntity, SwitchEntity):
         mac: str,
         device_type: str,
         config: int,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(
             ip=ip,

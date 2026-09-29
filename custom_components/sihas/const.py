@@ -1,6 +1,6 @@
 """Constants for the sihas integration."""
 
-from typing import Final, List, final
+from typing import Final
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -43,7 +43,7 @@ DEVICE_TYPE: Final = {
     "HQM": 29,
 }
 
-SUPPORT_DEVICE: Final[List[str]] = [
+SUPPORT_DEVICE: Final[list[str]] = [
     "ACM",
     "AQM",
     "BCM",

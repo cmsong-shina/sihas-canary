@@ -1,6 +1,5 @@
 import logging
 import socket
-import typing
 
 from .const import BUF_SIZE, DEFAULT_TIMEOUT, PORT
 from .errors import ModbusNotEnabledError
@@ -26,13 +25,13 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
                 raise ModbusNotEnabledError(ip)
             return resp
 
-        except socket.timeout:
+        except TimeoutError:
             retry -= 1
 
-    raise socket.timeout
+    raise TimeoutError
 
 
-def scan(data: bytes, ip: str, retry: int = 10) -> typing.Optional[str]:
+def scan(data: bytes, ip: str, retry: int = 10) -> str | None:
     while retry:
         try:
             _LOGGER.debug(f"scanning device, {ip=} {data=}")
@@ -40,10 +39,10 @@ def scan(data: bytes, ip: str, retry: int = 10) -> typing.Optional[str]:
             sock.sendto(data, (ip, 502))
             sock.settimeout(2)
             return sock.recv(BUF_SIZE).decode()
-        except socket.timeout:
+        except TimeoutError:
             retry -= 1
         except Exception as e:
             _LOGGER.error(f"failed to scan device: , {e}")
             break
-    _LOGGER.warning(f"failed to scan device: timeout")
+    _LOGGER.warning("failed to scan device: timeout")
     return None

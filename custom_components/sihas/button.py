@@ -1,15 +1,15 @@
 """Platform for light integration."""
+
 from __future__ import annotations
 
 import logging
 from datetime import timedelta
-from typing import List
+from typing import Final
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from typing_extensions import Final
 
 from .climate import Acm300
 from .const import (
@@ -46,10 +46,9 @@ async def async_setup_entry(
         )
 
         async_add_entities(await get_ucr(acm))
-    return
 
 
-async def get_ucr(acm) -> List[AcmUCR]:
+async def get_ucr(acm) -> list[AcmUCR]:
 
     try:
         req = pb.poll()
@@ -60,14 +59,16 @@ async def get_ucr(acm) -> List[AcmUCR]:
         )
 
         acm.registers = pb.extract_registers(resp)
-        ucr_reg = acm.registers[Acm300.REG_LIST_UCR1] + (acm.registers[Acm300.REG_LIST_UCR2] << 16)
+        ucr_reg = acm.registers[Acm300.REG_LIST_UCR1] + (
+            acm.registers[Acm300.REG_LIST_UCR2] << 16
+        )
         urcs = []
-        for i in range(0, 20):
+        for i in range(20):
             if ucr_reg & (1 << i) != 0:
                 urcs.append(AcmUCR(acm, i))
         return urcs
     except Exception as e:
-        _LOGGER.error(f"failed to get UCR: {str(e)}")
+        _LOGGER.error(f"failed to get UCR: {e!s}")
         return []
 
 

@@ -170,7 +170,8 @@ class BcmCoordinator(DataUpdateCoordinator[BcmState]):
         try:
             return await self.hass.async_add_executor_job(self.client.read)
         except Exception as err:
-            raise UpdateFailed(f"BCM read failed: {err}") from err
+            detail = str(err) or type(err).__name__
+            raise UpdateFailed(f"BCM read failed: {detail}") from err
 
     async def _async_update_data(self) -> BcmState:
         async with self._io_lock:

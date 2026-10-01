@@ -15,20 +15,23 @@ def send(data: bytes, ip: str, port: int = PORT, retry: int = 1) -> bytes:
     """
 
     ip = IpConv.remove_leading_zero(ip)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    while retry:
-        try:
-            sock.sendto(data, (ip, port))
-            sock.settimeout(DEFAULT_TIMEOUT)
-            resp = sock.recv(BUF_SIZE)
-            if (resp[7] & 0x08) != 0:
-                raise ModbusNotEnabledError(ip)
-            return resp
+    last_timeout = None
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.settimeout(DEFAULT_TIMEOUT)
+        for _ in range(retry):
+            try:
+                sock.sendto(data, (ip, port))
+                resp = sock.recv(BUF_SIZE)
+                if (resp[7] & 0x08) != 0:
+                    raise ModbusNotEnabledError(ip)
+                return resp
 
-        except TimeoutError:
-            retry -= 1
+            except TimeoutError as err:
+                last_timeout = err
 
-    raise TimeoutError
+    raise TimeoutError(
+        f"failed to request to {ip}:{port}: timed out."
+    ) from last_timeout
 
 
 def scan(data: bytes, ip: str, retry: int = 10) -> str | None:

@@ -1,14 +1,47 @@
 Just to memo for me :D
 
 
-#### To bump version
+#### 버전 올리기
 
-Modify `manifest.json` version with result of below command
+To modify `manifest.json` version field, use below command:
 
 ```bash
-$ standard-version # for check, run with `--dry-run` option
-✔ bumping version in manifest.json from 1.0.2 to 1.0.3
+$ uvx bump-my-version show current_version
+1.7.11
+
+$ uvx bump-my-version show-bump
+1.7.11 ── bump ─┬─ major ─ 2.0.0-b1
+                ├─ minor ─ 1.8.0-b1
+                ├─ patch ─ 1.7.12-b1
+                ├─ pre_l ─ invalid: The part has already the maximum value among ['b', 'final'] and cannot be bumped.
+                ╰─ pre_n ─ 1.7.11-final2
+
+$ uvx bump-my-version bump minor # [major|minor|patch]
+
+$ uvx bump-my-version show current_version
+1.8.0-b1
+
+$ uvx bump-my-version bump pre_l
+
+$ uvx bump-my-version show current_version
+1.8.0
 ```
+
+`major`, `minor`, `patch`를 증가시키면 새 버전의 베타 릴리스 `b1`부터 시작한다.
+예를 들어 `1.7.11`에서 다음 순서로 진행한다.
+
+```bash
+uvx bump-my-version bump patch  # 1.7.12-b1
+uvx bump-my-version bump pre_n  # 1.7.12-b2
+uvx bump-my-version bump pre_n  # 1.7.12-b3
+uvx bump-my-version bump pre_l  # 1.7.12 (정식 릴리스)
+```
+
+미리 확인하려면 `bump` 명령에 `--dry-run --verbose`를 추가한다.
+
+푸시와 GitHub Release 생성은 별도로 수행한다. 아래 태그는 실제 생성한 버전으로 바꾼다.
+
+GitHub에서 해당 태그로 Release를 생성하면 된다.
 
 To enter develop env:
 ```bash

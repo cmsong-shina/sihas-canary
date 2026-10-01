@@ -1,0 +1,35 @@
+[tool.bumpversion]
+current_version = "1.7.11"
+parse = """(?x)
+    (?P<major>0|[1-9]\\d*)\\.
+    (?P<minor>0|[1-9]\\d*)\\.
+    (?P<patch>0|[1-9]\\d*)
+    (?:
+        -
+        (?P<pre_l>[a-zA-Z-]+)
+        (?P<pre_n>0|[1-9]\\d*)
+    )?
+"""
+serialize = [
+    "{major}.{minor}.{patch}-{pre_l}{pre_n}",
+    "{major}.{minor}.{patch}",
+]
+commit = true
+message = "chore(release): v{new_version}"
+tag = true
+tag_name = "v{new_version}"
+tag_message = "Release v{new_version}"
+push_tag = false
+allow_dirty = false
+
+[tool.bumpversion.parts.pre_l]
+values = ["b", "final"]
+optional_value = "final"
+
+[tool.bumpversion.parts.pre_n]
+first_value = "1"
+
+[[tool.bumpversion.files]]
+filename = "custom_components/sihas/manifest.json"
+search = '"version": "{current_version}"'
+replace = '"version": "{new_version}"'

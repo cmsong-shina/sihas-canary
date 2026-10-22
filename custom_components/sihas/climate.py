@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import logging
-import math
 import time
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
-from enum import Enum, IntEnum
+from enum import IntEnum
 from typing import Final, cast
 
 from homeassistant.components.climate import ClimateEntity
@@ -32,9 +31,11 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .bcm import TARGET_REGISTERS, BcmCoordinator, BcmEntity, Register, get_coordinator
 from .const import (
     CONF_CFG,
     CONF_IP,
@@ -137,17 +138,7 @@ async def async_setup_entry(
             )
 
     elif entry.data[CONF_TYPE] == "BCM":
-        async_add_entities(
-            [
-                Bcm300(
-                    entry.data[CONF_IP],
-                    entry.data[CONF_MAC],
-                    entry.data[CONF_TYPE],
-                    entry.data[CONF_CFG],
-                    entry.data[CONF_NAME],
-                ),
-            ],
-        )
+        async_add_entities([Bcm300(get_coordinator(hass, entry))])
     elif entry.data[CONF_TYPE] == "TCM":
         async_add_entities(
             [
@@ -637,192 +628,76 @@ class OutModeEntity(SelectEntity):
         """Change the selected option."""
 
 
-class BcmHeatMode(Enum):
-    Room = 0
-    Ondol = 1
+class Bcm300(BcmEntity, ClimateEntity):
+    """BCM power and the selected mode's target; room measurement in all modes."""
 
-
-@dataclass
-class BcmOpMode:
-    isOnsuOn: bool
-    isHeatOn: bool
-    heatMode: BcmHeatMode
-
-
-# BCM
-BCM_REG_ONOFF: Final = 0  # 보일러 운전상태 ON/OFF
-BCM_REG_ROOMSETPT: Final = 1  # 보일러 실내난방 설정온도(x1)
-BCM_REG_ONDOLSETPT: Final = 2  # 보일러 온돌난방 설정온도(x1)
-BCM_REG_ONSUSETPT: Final = 3  # 보일러 온수전용 설정온도(x1)
-BCM_REG_OPERMODE: Final = 4  # 보일러 운전모드
-BCM_REG_OUTMODE: Final = 5  # 보일러 외출모드(0=재실,1=외출)
-BCM_REG_TIMERMODE: Final = 6  # 보일러 예약모드(0=예약없음,1=예약실행)
-BCM_REG_TIMERTIME: Final = 7  # 보일러 예약시간(예:1210->12시간마다 10분가동)
-BCM_REG_ROOMTEMP: Final = 8  # 보일러 실내온도(x0.1)
-BCM_REG_ONDOLTEMP: Final = 9  # 보일러 온돌온도(x1)
-BCM_REG_ONSUTEMP: Final = 10  # 보일러 온수온도(x1)
-BCM_REG_FIRE_STATE: Final = 11  # 보일러 연소상태(0=정지,1=연소)
-BCM_REG_ERRORST: Final = 12  # 보일러 에러상태(0=정상, 그외는 에러)
-BCM_REG_WATERST: Final = 13  # 보일러 물보충상태(0=정상, 1=물보충필요)
-BCM_REG_ONLINEST: Final = 14  # 보일러 통신상태(0=온라인, 1=오프라인)
-
-
-BCM_SUPPORTED_FEATURES: Final = (
-    ClimateEntityFeature.TARGET_TEMPERATURE
-    | ClimateEntityFeature.TURN_ON
-    | ClimateEntityFeature.TURN_OFF
-)
-
-
-class BoilerManufactuer(IntEnum):
-    KYUNGDONG = 0
-    KITURAMI = 1
-    DAESUNG = 2
-    RINNAI = 3
-    DMAX = 4
-    RESERVED1 = 5
-    RESERVED2 = 6
-
-
-class Bcm300(SihasEntity, ClimateEntity):
     _attr_icon = ICON_HEATER
-    _attr_hvac_modes: Final = [
-        HVACMode.OFF,
-        HVACMode.HEAT,
-        HVACMode.FAN_ONLY,
-        HVACMode.AUTO,
-    ]
-    _attr_max_temp: Final = 80
-    _attr_min_temp: Final = 0
-    _attr_supported_features: Final = BCM_SUPPORTED_FEATURES
-    _attr_target_temperature_step: Final = 1
-    _attr_temperature_unit: Final = UnitOfTemperature.CELSIUS
+    _attr_hvac_modes: Final = [HVACMode.OFF, HVACMode.HEAT]
+    _attr_target_temperature_step = 1
+    _attr_precision = 0.1
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
 
-    def __init__(
-        self,
-        ip: str,
-        mac: str,
-        device_type: str,
-        config: int,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(
-            ip=ip,
-            mac=mac,
-            device_type=device_type,
-            config=config,
-            name=name,
-        )
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator)
 
-        self.opmode: BcmOpMode | None = None
-        self.manufacturer: BoilerManufactuer | None = None
-        self.is_boiler_on: bool | None = None
-        self.is_outmode: bool | None = None
-        self.is_timermode: bool | None = None
+    @property
+    def hvac_mode(self) -> HVACMode:
+        return HVACMode.HEAT if self.coordinator.data[Register.POWER] else HVACMode.OFF
 
-    def set_hvac_mode(self, hvac_mode: str):
-        """
-        FIXME: Evil blocking sleep Should be refactored to async
-        """
-        if (
-            hvac_mode == HVACMode.AUTO
-        ):  # 온도(실내 혹은 온돌) 모드. 실내/온돌 전환은 지원하지 않음.
-            if not self.is_boiler_on:
-                self.command(BCM_REG_ONOFF, 1)
-                time.sleep(1)
-            if self.is_outmode:
-                self.command(BCM_REG_OUTMODE, 0)
-                time.sleep(1)
-            if self.is_timermode:
-                self.command(BCM_REG_TIMERMODE, 0)
-        elif hvac_mode == HVACMode.HEAT:  # 예약모드
-            if not self.is_boiler_on:
-                self.command(BCM_REG_ONOFF, 1)
-                time.sleep(1)
-            if self.is_outmode:
-                self.command(BCM_REG_OUTMODE, 0)
-                time.sleep(1)
-            self.command(BCM_REG_TIMERMODE, 1)
-        elif hvac_mode == HVACMode.FAN_ONLY:  # 외출 모드
-            if not self.is_boiler_on:
-                self.command(BCM_REG_ONOFF, 1)
-                time.sleep(1)
-            self.command(BCM_REG_OUTMODE, 1)
-        elif hvac_mode == HVACMode.OFF:  # 끄기
-            if self.is_boiler_on:
-                self.command(BCM_REG_ONOFF, 0)
-
-    def set_temperature(self, **kwargs):
-        tmp = cast(float, kwargs.get(ATTR_TEMPERATURE))
-
-        assert self.opmode != None
-        self.command(
-            (
-                BCM_REG_ROOMSETPT
-                if (self.opmode.heatMode == BcmHeatMode.Room)
-                else BCM_REG_ONDOLSETPT
-            ),
-            math.floor(tmp),
-        )
-
-    def update(self):
-        if regs := self.poll():
-            self.opmode = self._parse_oper_mode(regs)
-
-            self._attr_hvac_mode = self._resolve_hvac_mode(regs)
-            self._attr_hvac_action = self._resolve_hvac_action(regs)
-
-            setpt: int | None = None  # set point
-            curpt: int | None = None  # current point
-
-            if self.opmode.heatMode == BcmHeatMode.Room:
-                setpt = regs[BCM_REG_ROOMSETPT]
-                curpt = math.floor(regs[BCM_REG_ROOMTEMP] / 10)
-            else:
-                setpt = regs[BCM_REG_ONDOLSETPT]
-                curpt = regs[BCM_REG_ONDOLTEMP]
-
-            self._attr_current_temperature = curpt
-            self._attr_target_temperature = setpt
-            self.manufacturer = BoilerManufactuer(regs[15])
-            self.is_boiler_on = regs[0] == 1
-            self.is_outmode = regs[5] == 1
-            self.is_timermode = regs[6] == 1
-
-    def _resolve_hvac_mode(self, regs):
-        if regs[BCM_REG_ONOFF] == 0:
-            return HVACMode.OFF
-        elif regs[BCM_REG_TIMERMODE] == 1:
-            return HVACMode.HEAT
-        elif regs[BCM_REG_OUTMODE] == 1:
-            return HVACMode.FAN_ONLY
-        else:
-            return HVACMode.AUTO
-
-    def _resolve_hvac_action(self, regs):
-        if regs[BCM_REG_ONOFF] == 0:
+    @property
+    def hvac_action(self) -> HVACAction:
+        if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-        # elif regs[BCM_REG_OUTMODE] == 1:
-        #     return HVACAction.FAN
-        elif regs[BCM_REG_FIRE_STATE] == 0:
-            return HVACAction.IDLE
-        else:
-            return HVACAction.HEATING
-
-    def _parse_oper_mode(self, regs: list[int]) -> BcmOpMode:
-        r"""보일러 운전모드 파싱
-        regs[_BCMOPERMODE] = 0b_0000_0000
-                                       \\\_온수 ON/OFF Flag
-                                        \\_난방 ON/OFF Flag
-                                         \_난방 모드 Flag [0=실내, 1=온돌]
-        """
-        reg = regs[BCM_REG_OPERMODE]
-
-        return BcmOpMode(
-            (reg & 1) != 0,
-            (reg & (1 << 1)) != 0,
-            BcmHeatMode.Ondol if (reg & (1 << 2)) != 0 else BcmHeatMode.Room,
+        return (
+            HVACAction.HEATING if self.coordinator.data[Register.FLAME]
+            else HVACAction.IDLE
         )
+
+    @property
+    def current_temperature(self) -> float:
+        return self.coordinator.data.current_temperature
+
+    @property
+    def _limits(self) -> tuple[int, int] | None:
+        state = self.coordinator.data
+        return self.coordinator.temperature_limits(state, state.operation_mode)
+
+    @property
+    def supported_features(self) -> ClimateEntityFeature:
+        features = ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
+        if self._limits is not None:
+            features |= ClimateEntityFeature.TARGET_TEMPERATURE
+        return features
+
+    @property
+    def target_temperature(self) -> float | None:
+        if self._limits is None:
+            return None
+        state = self.coordinator.data
+        return state[TARGET_REGISTERS[state.operation_mode]]
+
+    @property
+    def min_temp(self) -> float:
+        return self._limits[0] if self._limits else 0
+
+    @property
+    def max_temp(self) -> float:
+        return self._limits[1] if self._limits else 0
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        if hvac_mode not in self.hvac_modes:
+            raise ServiceValidationError(f"Unsupported BCM HVAC mode: {hvac_mode}")
+        await self.coordinator.async_set_power(hvac_mode == HVACMode.HEAT)
+
+    async def async_turn_on(self) -> None:
+        await self.coordinator.async_set_power(True)
+
+    async def async_turn_off(self) -> None:
+        await self.coordinator.async_set_power(False)
+
+    async def async_set_temperature(self, **kwargs) -> None:
+        # Do not apply a supplied hvac_mode: set points never change power.
+        await self.coordinator.async_set_temperature(kwargs.get(ATTR_TEMPERATURE))
 
 
 # Register index

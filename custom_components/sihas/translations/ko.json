@@ -29,5 +29,56 @@
                 "title": "새로운 시하스 장치"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "bcm_current_temperature": {
+                "name": "현재 실내 온도"
+            }
+        },
+        "number": {
+            "bcm_room_temperature": {
+                "name": "실내난방온도"
+            },
+            "bcm_ondol_temperature": {
+                "name": "온돌난방온도"
+            },
+            "bcm_hot_water_temperature": {
+                "name": "온수난방온도"
+            }
+        },
+        "select": {
+            "bcm_operation_mode": {
+                "name": "운전모드",
+                "state": {
+                    "실내": "실내난방",
+                    "온돌": "온돌난방",
+                    "온수": "온수전용"
+                }
+            },
+            "bcm_presence": {
+                "name": "외출 모드",
+                "state": {
+                    "재실": "재실",
+                    "외출": "외출"
+                }
+            },
+            "bcm_hot_water_level": {
+                "name": "온수 단계",
+                "state": {
+                    "저온": "저온",
+                    "중온": "중온",
+                    "고온": "고온"
+                }
+            }
+        },
+        "switch": {
+            "bcm_bath_mode": {
+                "name": "목욕 모드"
+            },
+            "bcm_timer": {
+                "name": "예약 모드"
+            }
+        }
     }
 }

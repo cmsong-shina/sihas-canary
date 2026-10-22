@@ -17,5 +17,56 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
+  },
+  "entity": {
+    "sensor": {
+      "bcm_current_temperature": {
+        "name": "Current temperature"
+      }
+    },
+    "number": {
+      "bcm_room_temperature": {
+        "name": "Room target temperature"
+      },
+      "bcm_ondol_temperature": {
+        "name": "Ondol target temperature"
+      },
+      "bcm_hot_water_temperature": {
+        "name": "Hot water target temperature"
+      }
+    },
+    "select": {
+      "bcm_operation_mode": {
+        "name": "Operation mode",
+        "state": {
+          "실내": "Room heating",
+          "온돌": "Ondol heating",
+          "온수": "Hot water"
+        }
+      },
+      "bcm_presence": {
+        "name": "Presence",
+        "state": {
+          "재실": "Home",
+          "외출": "Away"
+        }
+      },
+      "bcm_hot_water_level": {
+        "name": "Hot water level",
+        "state": {
+          "저온": "Low",
+          "중온": "Medium",
+          "고온": "High"
+        }
+      }
+    },
+    "switch": {
+      "bcm_bath_mode": {
+        "name": "Bath mode"
+      },
+      "bcm_timer": {
+        "name": "Timer"
+      }
+    }
   }
 }

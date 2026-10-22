@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .bcm import BATH_BIT, BcmCoordinator, BcmEntity, Register, get_coordinator
 from .const import (
     CONF_CFG,
     CONF_IP,
@@ -39,7 +40,13 @@ PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if entry.data[CONF_TYPE] == "CCM":
+    if entry.data[CONF_TYPE] == "BCM":
+        coordinator = get_coordinator(hass, entry)
+        entities = [BcmTimer(coordinator)]
+        if coordinator.has_bath:
+            entities.append(BcmBathMode(coordinator))
+        async_add_entities(entities)
+    elif entry.data[CONF_TYPE] == "CCM":
         async_add_entities(
             [
                 Ccm300(
@@ -51,6 +58,40 @@ async def async_setup_entry(
                 ),
             ],
         )
+
+
+class BcmTimer(BcmEntity, SwitchEntity):
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "timer")
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data[Register.TIMER] == 1
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.async_set_timer(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.async_set_timer(False)
+
+
+class BcmBathMode(BcmEntity, SwitchEntity):
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "bath_mode")
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.data[Register.MANUFACTURER] == 1
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self.coordinator.data[Register.OPERATION_MODE] & BATH_BIT)
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.async_set_bath(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.async_set_bath(False)
 
 
 class Ccm300(SihasEntity, SwitchEntity):

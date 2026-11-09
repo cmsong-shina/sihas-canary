@@ -1,0 +1,13 @@
+services:
+  homeassistant:
+    image: ${HA_IMAGE:-ghcr.io/home-assistant/home-assistant:stable}
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./.ha-dev/config:/config
+      - ./custom_components/sihas:/config/custom_components/sihas:ro
+    stop_grace_period: 30s

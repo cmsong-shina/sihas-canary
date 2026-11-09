@@ -80,28 +80,26 @@ $ uvx bump-my-version show current_version
 1.7.11
 
 $ uvx bump-my-version show-bump
-1.7.11 ── bump ─┬─ major ─ 2.0.0-b1
-                ├─ minor ─ 1.8.0-b1
-                ├─ patch ─ 1.7.12-b1
+1.7.11 ── bump ─┬─ major ─ 2.0.0
+                ├─ minor ─ 1.8.0
+                ├─ patch ─ 1.7.12
                 ├─ pre_l ─ invalid: The part has already the maximum value among ['b', 'final'] and cannot be bumped.
                 ╰─ pre_n ─ 1.7.11-final2
 
 $ uvx bump-my-version bump minor # [major|minor|patch]
 
 $ uvx bump-my-version show current_version
-1.8.0-b1
-
-$ uvx bump-my-version bump pre_l
-
-$ uvx bump-my-version show current_version
 1.8.0
 ```
 
-`major`, `minor`, `patch`를 증가시키면 새 버전의 베타 릴리스 `b1`부터 시작한다.
-예를 들어 `1.7.11`에서 다음 순서로 진행한다.
+`major`, `minor`, `patch`를 증가시키면 사전 릴리스를 거치지 않고 바로 정식 버전으로 올린다.
+`pre_l`의 `first_value = "final"` 설정으로 이 동작을 기본값으로 사용한다.
+예를 들어 `1.7.11`에서 `uvx bump-my-version bump major`를 실행하면 `2.0.0`이 된다.
+
+베타 릴리스가 필요하면 시작 버전을 명시한 뒤 다음 순서로 진행한다.
 
 ```bash
-uvx bump-my-version bump patch  # 1.7.12-b1
+uvx bump-my-version bump patch --new-version 1.7.12-b1
 uvx bump-my-version bump pre_n  # 1.7.12-b2
 uvx bump-my-version bump pre_n  # 1.7.12-b3
 uvx bump-my-version bump pre_l  # 1.7.12 (정식 릴리스)

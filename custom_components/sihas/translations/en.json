@@ -34,6 +34,21 @@
         "sensor": {
             "bcm_current_temperature": {
                 "name": "Current temperature"
+            },
+            "gcm_default_time": {
+                "name": "Default time"
+            },
+            "gcm_remaining_time": {
+                "name": "Remaining time"
+            },
+            "gcm_battery_state": {
+                "name": "Battery state",
+                "state": {
+                    "replace": "Replace",
+                    "low": "Low",
+                    "medium": "Medium",
+                    "full": "Full"
+                }
             }
         },
         "number": {
@@ -78,6 +93,19 @@
             },
             "bcm_timer": {
                 "name": "Timer"
+            }
+        },
+        "button": {
+            "gcm_close": {
+                "name": "Close gas valve"
+            }
+        },
+        "binary_sensor": {
+            "gcm_valve_open": {
+                "name": "Gas valve open"
+            },
+            "gcm_fire_alarm": {
+                "name": "Fire alarm"
             }
         }
     }

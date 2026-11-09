@@ -48,6 +48,7 @@ SUPPORT_DEVICE: Final[list[str]] = [
     "AQM",
     "BCM",
     "CCM",
+    "GCM",
     "HCM",
     "HVM",
     "PMM",

@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .gcm import GcmCoordinator, GcmEntity, get_coordinator
 from .climate import Acm300
 from .const import (
     CONF_CFG,
@@ -36,7 +37,9 @@ PLATFORM_SCHEMA: Final = SIHAS_PLATFORM_SCHEMA
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if entry.data[CONF_TYPE] == "ACM":
+    if entry.data[CONF_TYPE] == "GCM":
+        async_add_entities([GcmCloseButton(get_coordinator(hass, entry))])
+    elif entry.data[CONF_TYPE] == "ACM":
         acm = Acm300(
             entry.data[CONF_IP],
             entry.data[CONF_MAC],
@@ -83,3 +86,13 @@ class AcmUCR(ButtonEntity):
 
     def press(self) -> None:
         self.acm.command(Acm300.REG_EXEC_UCR, self.number_of_button)
+
+
+class GcmCloseButton(GcmEntity, ButtonEntity):
+    _attr_icon = "mdi:valve-closed"
+
+    def __init__(self, coordinator: GcmCoordinator) -> None:
+        super().__init__(coordinator, "close")
+
+    async def async_press(self) -> None:
+        await self.coordinator.async_close()

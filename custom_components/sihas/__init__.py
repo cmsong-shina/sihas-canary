@@ -7,6 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .bcm import BcmCoordinator
+from .gcm import GcmCoordinator
 from .const import CONF_TYPE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,6 +36,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         coordinator.discover_model()
         hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
+    if entry.data[CONF_TYPE] == "GCM":
+        coordinator = GcmCoordinator(hass, entry)
+        try:
+            await coordinator.async_config_entry_first_refresh()
+        except BaseException:
+            await coordinator.async_shutdown()
+            raise
+        hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -42,7 +52,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.info(f"entry unloadded: {entry.data}")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok and entry.data[CONF_TYPE] == "BCM":
-        coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+    if unload_ok and entry.data[CONF_TYPE] in ("BCM", "GCM"):
+        coordinator = hass.data[DOMAIN][entry.entry_id]
         await coordinator.async_shutdown()
+        hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok

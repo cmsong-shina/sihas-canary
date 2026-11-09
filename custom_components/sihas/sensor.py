@@ -22,11 +22,18 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfRatio,
     UnitOfTemperature,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .gcm import (
+    BATTERY_OPTIONS,
+    GcmCoordinator,
+    GcmEntity,
+    get_coordinator as get_gcm_coordinator,
+)
 from .bcm import BcmCoordinator, BcmEntity, get_coordinator
 from .const import (
     CONF_CFG,
@@ -212,6 +219,14 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     match entry.data[CONF_TYPE]:
+        case "GCM":
+            coordinator = get_gcm_coordinator(hass, entry)
+            async_add_entities([
+                GcmTimeSensor(coordinator, "default_time"),
+                GcmTimeSensor(coordinator, "remaining_time"),
+                GcmBatterySensor(coordinator),
+            ])
+
         case "BCM":
             async_add_entities([BcmCurrentTemperature(get_coordinator(hass, entry))])
 
@@ -405,3 +420,30 @@ class HqmHumidSensor(SihasEntity, SensorEntity):
     def update(self):
         if regs := self.poll():
             self._attr_native_value = regs[7]
+
+
+class GcmTimeSensor(GcmEntity, SensorEntity):
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_suggested_display_precision = 0
+
+    def __init__(self, coordinator: GcmCoordinator, key: str) -> None:
+        super().__init__(coordinator, key)
+        self._key = key
+
+    @property
+    def native_value(self) -> int:
+        return getattr(self.coordinator.data, self._key)
+
+
+class GcmBatterySensor(GcmEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_icon = "mdi:battery"
+    _attr_options = BATTERY_OPTIONS
+
+    def __init__(self, coordinator: GcmCoordinator) -> None:
+        super().__init__(coordinator, "battery_state")
+
+    @property
+    def native_value(self) -> str | None:
+        return self.coordinator.data.battery_state

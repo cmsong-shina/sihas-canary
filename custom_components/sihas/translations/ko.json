@@ -34,6 +34,21 @@
         "sensor": {
             "bcm_current_temperature": {
                 "name": "현재 실내 온도"
+            },
+            "gcm_default_time": {
+                "name": "기본 설정시간"
+            },
+            "gcm_remaining_time": {
+                "name": "남은 시간"
+            },
+            "gcm_battery_state": {
+                "name": "배터리 상태",
+                "state": {
+                    "replace": "교체",
+                    "low": "부족",
+                    "medium": "중간",
+                    "full": "충만"
+                }
             }
         },
         "number": {
@@ -78,6 +93,19 @@
             },
             "bcm_timer": {
                 "name": "예약 모드"
+            }
+        },
+        "button": {
+            "gcm_close": {
+                "name": "가스 밸브 닫기"
+            }
+        },
+        "binary_sensor": {
+            "gcm_valve_open": {
+                "name": "가스 밸브 열림"
+            },
+            "gcm_fire_alarm": {
+                "name": "화재 감지"
             }
         }
     }

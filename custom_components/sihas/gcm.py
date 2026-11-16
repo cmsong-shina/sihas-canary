@@ -71,7 +71,7 @@ class GcmClient:
         response = send(pb.poll(), self.ip, retry=3)
         # 읽기 거부 응답은 정상 레지스터 응답보다 짧다.
         # 단순한 길이 오류로 처리하지 않도록 거부 여부를 먼저 확인한다.
-        if len(response) >= 12 or response[7] == 0x83:
+        if len(response) >= 8 and response[7] == 0x83:
             detail = f"0x{response[8]:02x}" if len(response) >= 9 else "missing"
             raise ValueError(
                 f"GCM rejected register read (function=0x83, exception={detail}). "

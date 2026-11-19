@@ -228,7 +228,12 @@ async def async_setup_entry(
             ])
 
         case "BCM":
-            async_add_entities([BcmCurrentTemperature(get_coordinator(hass, entry))])
+            coordinator = get_coordinator(hass, entry)
+            async_add_entities([
+                BcmCurrentTemperature(coordinator),
+                BcmOndolTemperature(coordinator),
+                BcmErrorCode(coordinator),
+            ])
 
         case "PMM":
             pmm = Pmm300(
@@ -273,6 +278,31 @@ class BcmCurrentTemperature(BcmEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         return self.coordinator.data.current_temperature
+
+
+class BcmOndolTemperature(BcmEntity, SensorEntity):
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 0
+
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "ondol_temperature")
+
+    @property
+    def native_value(self) -> float:
+        return self.coordinator.data.ondol_temperature
+
+
+class BcmErrorCode(BcmEntity, SensorEntity):
+    _attr_icon = "mdi:alert-circle-outline"
+
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "error_code")
+
+    @property
+    def native_value(self) -> int:
+        return self.coordinator.data.error_code
 
 
 class Pmm300(SihasProxy):

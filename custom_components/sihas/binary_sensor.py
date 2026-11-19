@@ -19,6 +19,7 @@ from .const import (
     DEFAULT_PARALLEL_UPDATES,
     SIHAS_PLATFORM_SCHEMA,
 )
+from .bcm import BcmCoordinator, BcmEntity, get_coordinator as get_bcm_coordinator
 from .sihas_base import SihasEntity
 from .gcm import GcmCoordinator, GcmEntity, get_coordinator
 
@@ -31,7 +32,14 @@ PLATFORM_SCHEMA = SIHAS_PLATFORM_SCHEMA
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    if entry.data[CONF_TYPE] == "GCM":
+    if entry.data[CONF_TYPE] == "BCM":
+        coordinator = get_bcm_coordinator(hass, entry)
+        async_add_entities([
+            BcmFlameSensor(coordinator),
+            BcmErrorSensor(coordinator),
+            BcmWaterTankSensor(coordinator),
+        ])
+    elif entry.data[CONF_TYPE] == "GCM":
         coordinator = get_coordinator(hass, entry)
         async_add_entities([GcmValveSensor(coordinator), GcmFireSensor(coordinator)])
     elif entry.data[CONF_TYPE] == "ACM":
@@ -91,3 +99,36 @@ class GcmFireSensor(GcmEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         return self.coordinator.data.fire_alarm
+
+
+class BcmFlameSensor(BcmEntity, BinarySensorEntity):
+    _attr_icon = "mdi:fire"
+
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "flame")
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data.flame
+
+
+class BcmErrorSensor(BcmEntity, BinarySensorEntity):
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "error")
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data.has_error
+
+
+class BcmWaterTankSensor(BcmEntity, BinarySensorEntity):
+    _attr_icon = "mdi:water-boiler"
+
+    def __init__(self, coordinator: BcmCoordinator) -> None:
+        super().__init__(coordinator, "water_tank")
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data.water_tank_sufficient

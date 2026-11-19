@@ -38,7 +38,10 @@ class Register(IntEnum):
     AWAY = 5
     TIMER = 6
     ROOM_TEMPERATURE = 8
+    ONDOL_TEMPERATURE = 9
+    WATER_TANK = 10
     FLAME = 11
+    ERROR = 12
     MANUFACTURER = 15
     HOT_WATER_MAX = 21
     HOT_WATER_MIN = 22
@@ -88,6 +91,27 @@ class BcmState:
     @property
     def current_temperature(self) -> float:
         return self[Register.ROOM_TEMPERATURE] / 10
+
+    @property
+    def ondol_temperature(self) -> float:
+        return float(self[Register.ONDOL_TEMPERATURE])
+
+    @property
+    def flame(self) -> bool:
+        return bool(self[Register.FLAME])
+
+    @property
+    def error_code(self) -> int:
+        return self[Register.ERROR]
+
+    @property
+    def has_error(self) -> bool:
+        return self[Register.ERROR] != 0
+
+    @property
+    def water_tank_sufficient(self) -> bool:
+        # Water tank status: 0 indicates normal/sufficient.
+        return self[Register.WATER_TANK] == 0
 
     @property
     def hot_water_kind(self) -> str | None:

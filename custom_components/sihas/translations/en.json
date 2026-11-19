@@ -33,7 +33,13 @@
     "entity": {
         "sensor": {
             "bcm_current_temperature": {
-                "name": "Current temperature"
+                "name": "Room temperature"
+            },
+            "bcm_ondol_temperature": {
+                "name": "Water temperature"
+            },
+            "bcm_error_code": {
+                "name": "Error code"
             },
             "gcm_default_time": {
                 "name": "Default time"
@@ -101,6 +107,15 @@
             }
         },
         "binary_sensor": {
+            "bcm_flame": {
+                "name": "Ignition status"
+            },
+            "bcm_error": {
+                "name": "Boiler problem"
+            },
+            "bcm_water_tank": {
+                "name": "Water tank status"
+            },
             "gcm_valve_open": {
                 "name": "Gas valve open"
             },

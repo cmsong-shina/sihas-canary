@@ -35,6 +35,12 @@
             "bcm_current_temperature": {
                 "name": "현재 실내 온도"
             },
+            "bcm_ondol_temperature": {
+                "name": "난방수 온도"
+            },
+            "bcm_error_code": {
+                "name": "에러 코드"
+            },
             "gcm_default_time": {
                 "name": "기본 설정시간"
             },
@@ -101,6 +107,15 @@
             }
         },
         "binary_sensor": {
+            "bcm_flame": {
+                "name": "점화 상태"
+            },
+            "bcm_error": {
+                "name": "보일러 오류"
+            },
+            "bcm_water_tank": {
+                "name": "물탱크 수위"
+            },
             "gcm_valve_open": {
                 "name": "가스 밸브 열림"
             },
